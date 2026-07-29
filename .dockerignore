@@ -1,0 +1,8 @@
+**/.git
+**/__pycache__
+**/*.pyc
+**/results
+**/output
+**/*.mp4
+**/*.avi
+**/.ipynb_checkpoints

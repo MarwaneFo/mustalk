@@ -1,0 +1,5 @@
+# Les scripts doivent garder des fins de ligne LF : un CRLF dans un shebang
+# fait échouer le build Docker avec "no such file or directory".
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yml text eol=lf
