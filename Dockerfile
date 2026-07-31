@@ -4,12 +4,18 @@
 # =============================================================
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
+# USE_TF=0 : transformers importe TensorFlow dès qu'il le trouve. MuseTalk n'en a
+# aucun besoin, et cet import bloque l'initialisation (mesuré sur le pod : import
+# indéfini avec TF, 17 s sans).
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     TZ=Etc/UTC \
     HF_HOME=/root/.cache/huggingface \
-    FFMPEG_PATH=/usr/bin
+    FFMPEG_PATH=/usr/bin \
+    TORCH_HOME=/opt/torch_cache \
+    USE_TF=0 \
+    USE_TORCH=1
 
 # ---------- 1. Système ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \

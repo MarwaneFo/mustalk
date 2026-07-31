@@ -1,0 +1,200 @@
+"""
+Handler RunPod Serverless pour MuseTalk v1.5.
+
+Les modèles sont chargés une seule fois au démarrage du worker (hors du handler),
+sinon on paierait ~8,7 Go de chargement à chaque requête.
+
+Subtilité : realtime_inference.py définit `args`, `vae`, `unet`, `whisper`, `fp`…
+à l'intérieur de `if __name__ == "__main__"`. Un import ne les crée donc pas ;
+il faut les injecter dans le module avant d'instancier `Avatar`.
+
+Entrée attendue :
+{
+  "input": {
+    "avatar_id":    "Inna",           # avatar pré-calculé présent dans results/
+    "audio_url":    "https://...",    # ou "audio_base64"
+    "audio_base64": "...",
+    "fps":          25,
+    "batch_size":   20
+  }
+}
+
+Sortie : {"video_base64": "...", "duration_s": 12.4, "avatar_id": "Inna"}
+"""
+
+import os
+import sys
+import base64
+import shutil
+import tempfile
+import time
+import argparse
+import traceback
+
+import requests
+import runpod
+
+MUSETALK_ROOT = os.environ.get("MUSETALK_ROOT", "/opt/MuseTalk")
+DEFAULT_AVATAR = os.environ.get("AVATAR_ID", "Inna")
+
+# À poser AVANT tout import de transformers : sinon il charge TensorFlow, ce qui
+# bloque l'initialisation du worker (constaté sur le pod).
+os.environ.setdefault("USE_TF", "0")
+os.environ.setdefault("USE_TORCH", "1")
+os.environ.setdefault("TORCH_HOME", "/opt/torch_cache")
+
+# Les chemins du projet sont relatifs (./models, ./results) : il faut s'y placer.
+os.chdir(MUSETALK_ROOT)
+sys.path.insert(0, MUSETALK_ROOT)
+
+import torch  # noqa: E402
+from transformers import WhisperModel  # noqa: E402
+from musetalk.utils.utils import load_all_model  # noqa: E402
+from musetalk.utils.audio_processor import AudioProcessor  # noqa: E402
+from musetalk.utils.face_parsing import FaceParsing  # noqa: E402
+import scripts.realtime_inference as ri  # noqa: E402
+
+
+def _build_args():
+    """Reconstruit le Namespace que realtime_inference attend en global."""
+    return argparse.Namespace(
+        version="v15",
+        ffmpeg_path="/usr/bin",
+        gpu_id=0,
+        vae_type="sd-vae",
+        unet_config="./models/musetalkV15/musetalk.json",
+        unet_model_path="./models/musetalkV15/unet.pth",
+        whisper_dir="./models/whisper",
+        bbox_shift=0,
+        result_dir="./results",
+        extra_margin=10,
+        fps=25,
+        audio_padding_length_left=2,
+        audio_padding_length_right=2,
+        batch_size=20,
+        output_vid_name=None,
+        use_saved_coord=False,
+        saved_coord=False,
+        parsing_mode="jaw",
+        left_cheek_width=90,
+        right_cheek_width=90,
+        skip_save_images=False,
+        inference_config="configs/inference/realtime.yaml",
+    )
+
+
+def _load_models():
+    """Chargement unique, au démarrage du worker."""
+    args = _build_args()
+    ri.args = args
+
+    device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
+    print(f"[init] device={device} cuda={torch.cuda.is_available()}", flush=True)
+
+    vae, unet, pe = load_all_model(
+        unet_model_path=args.unet_model_path,
+        vae_type=args.vae_type,
+        unet_config=args.unet_config,
+        device=device,
+    )
+    pe = pe.half().to(device)
+    vae.vae = vae.vae.half().to(device)
+    unet.model = unet.model.half().to(device)
+
+    audio_processor = AudioProcessor(feature_extractor_path=args.whisper_dir)
+    weight_dtype = unet.model.dtype
+    whisper = WhisperModel.from_pretrained(args.whisper_dir)
+    whisper = whisper.to(device=device, dtype=weight_dtype).eval()
+    whisper.requires_grad_(False)
+
+    fp = FaceParsing(
+        left_cheek_width=args.left_cheek_width,
+        right_cheek_width=args.right_cheek_width,
+    )
+
+    # Injection des globales dont Avatar.inference() a besoin.
+    ri.device = device
+    ri.vae, ri.unet, ri.pe = vae, unet, pe
+    ri.timesteps = torch.tensor([0], device=device)
+    ri.audio_processor = audio_processor
+    ri.whisper = whisper
+    ri.weight_dtype = weight_dtype
+    ri.fp = fp
+    print("[init] modèles chargés", flush=True)
+
+
+_load_models()
+_AVATARS = {}
+
+
+def _get_avatar(avatar_id, batch_size):
+    """Les avatars pré-calculés sont réutilisés entre les requêtes."""
+    if avatar_id not in _AVATARS:
+        path = f"./results/v15/avatars/{avatar_id}"
+        if not os.path.isdir(path):
+            raise FileNotFoundError(
+                f"Avatar '{avatar_id}' introuvable dans {path}. "
+                "Il doit être pré-calculé (latents.pt, coords.pkl, mask/)."
+            )
+        print(f"[avatar] chargement de {avatar_id}", flush=True)
+        _AVATARS[avatar_id] = ri.Avatar(
+            avatar_id=avatar_id,
+            video_path="",
+            bbox_shift=0,
+            batch_size=batch_size,
+            preparation=False,   # réutilise le pré-calcul, n'écrase rien
+        )
+    return _AVATARS[avatar_id]
+
+
+def _fetch_audio(job_input, workdir):
+    dest = os.path.join(workdir, "audio.wav")
+    if job_input.get("audio_base64"):
+        with open(dest, "wb") as f:
+            f.write(base64.b64decode(job_input["audio_base64"]))
+    elif job_input.get("audio_url"):
+        r = requests.get(job_input["audio_url"], timeout=120)
+        r.raise_for_status()
+        with open(dest, "wb") as f:
+            f.write(r.content)
+    else:
+        raise ValueError("Fournir 'audio_url' ou 'audio_base64'.")
+    return dest
+
+
+def handler(job):
+    started = time.time()
+    job_input = job.get("input") or {}
+    workdir = tempfile.mkdtemp(prefix="musetalk_")
+    try:
+        avatar_id = job_input.get("avatar_id", DEFAULT_AVATAR)
+        fps = int(job_input.get("fps", 25))
+        batch_size = int(job_input.get("batch_size", 20))
+
+        audio_path = _fetch_audio(job_input, workdir)
+        avatar = _get_avatar(avatar_id, batch_size)
+
+        out_name = f"job_{int(started)}"
+        avatar.inference(audio_path, out_name, fps, False)
+
+        out_path = os.path.join(avatar.video_out_path, f"{out_name}.mp4")
+        if not os.path.exists(out_path):
+            raise RuntimeError(f"Vidéo non produite : {out_path}")
+
+        with open(out_path, "rb") as f:
+            video_b64 = base64.b64encode(f.read()).decode()
+        os.remove(out_path)
+
+        return {
+            "avatar_id": avatar_id,
+            "duration_s": round(time.time() - started, 2),
+            "video_base64": video_b64,
+        }
+    except Exception as e:
+        traceback.print_exc()
+        return {"error": f"{type(e).__name__}: {e}"}
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+
+
+runpod.serverless.start({"handler": handler})

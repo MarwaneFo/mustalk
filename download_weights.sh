@@ -26,6 +26,16 @@ wget -q -O "$M/face-parse-bisent/resnet18-5c106cde.pth" \
 huggingface-cli download ManyOtherFunctions/face-parse-bisent 79999_iter.pth \
   --local-dir "$M/face-parse-bisent"
 
+# S3FD : musetalk/utils/face_detection le télécharge depuis un site tiers
+# à la PREMIÈRE inférence. Sur Serverless, ça veut dire un démarrage à froid
+# qui part chercher 86 Mo chez adrianbulat.com — et qui échoue si le site est
+# indisponible. On l'embarque donc dans l'image.
+CK="${TORCH_HOME:-/opt/torch_cache}/hub/checkpoints"
+mkdir -p "$CK"
+wget -c -q --tries=10 --timeout=45 -O "$CK/s3fd-619a316812.pth" \
+  https://www.adrianbulat.com/downloads/python-fan/s3fd-619a316812.pth
+echo ">>> S3FD : $(du -h "$CK/s3fd-619a316812.pth" | cut -f1)"
+
 # Le cache HF double la place occupée : on le purge après copie.
 rm -rf "$M"/.cache /root/.cache/huggingface
 

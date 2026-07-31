@@ -1,0 +1,32 @@
+# =============================================================
+#  MuseTalk - variante RunPod Serverless
+#  Part de l'image de base (code + poids) et ajoute le handler.
+#
+#  Build :
+#    docker build -f Dockerfile.serverless \
+#      --build-arg BASE=ghcr.io/<owner>/musetalk:v1.5 \
+#      -t ghcr.io/<owner>/musetalk-serverless:v1.5 .
+# =============================================================
+ARG BASE=ghcr.io/owner/musetalk:v1.5
+FROM ${BASE}
+
+# Le SDK RunPod et requests pour récupérer l'audio distant.
+RUN pip install --no-cache-dir runpod requests
+
+# Avatars pré-calculés embarqués dans l'image : sans eux, chaque requête
+# refait la préparation (extraction des frames, latents, masques), soit
+# plusieurs minutes de GPU perdues à chaque démarrage à froid.
+# Placer les dossiers dans ./avatars/<nom>/ du contexte de build.
+COPY avatars/ /opt/MuseTalk/results/v15/avatars/
+
+COPY handler.py /opt/MuseTalk/handler.py
+
+ENV MUSETALK_ROOT=/opt/MuseTalk \
+    AVATAR_ID=Inna \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /opt/MuseTalk
+
+# Le Serverless n'utilise pas l'entrypoint de l'image de base.
+ENTRYPOINT []
+CMD ["python", "-u", "/opt/MuseTalk/handler.py"]
