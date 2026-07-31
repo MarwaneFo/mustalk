@@ -43,11 +43,18 @@ RUN pip install -r requirements.txt \
  && pip install openmim "huggingface_hub[cli]" gdown
 
 # ---------- 4. Stack OpenMMLab (roues précompilées) ----------
-RUN mim install mmengine \
+# mmpose 1.1.0 dépend de chumpy, dont le setup.py ne compile plus avec les
+# setuptools récents ("No module named 'pip'" pendant le build du wheel).
+# chumpy ne sert qu'aux modèles de corps SMPL — MuseTalk n'utilise mmpose que
+# pour le visage (DWPose). On l'installe donc sans ses dépendances, en posant
+# à la main celles qui comptent vraiment. Recette validée sur GPU.
+RUN pip install mmengine \
  && pip install mmcv==2.0.1 \
       -f https://download.openmmlab.com/mmcv/dist/cu118/torch2.0/index.html \
- && mim install "mmdet==3.1.0" \
- && mim install "mmpose==1.1.0"
+ && pip install "mmdet==3.1.0" \
+ && pip install json_tricks munkres xtcocotools matplotlib scipy \
+ && pip install "mmpose==1.1.0" --no-deps \
+ && python -c "import mmcv, mmdet, mmpose, mmengine; print('mmlab OK', mmcv.__version__, mmdet.__version__, mmpose.__version__)"
 
 COPY entrypoint.sh download_weights.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/download_weights.sh
