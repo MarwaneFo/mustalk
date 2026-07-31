@@ -37,6 +37,18 @@ import runpod
 MUSETALK_ROOT = os.environ.get("MUSETALK_ROOT", "/opt/MuseTalk")
 DEFAULT_AVATAR = os.environ.get("AVATAR_ID", "Inna")
 
+# Les avatars pré-calculés pèsent plusieurs Go (full_imgs) : trop pour une image.
+# RunPod Serverless monte le volume réseau sur /runpod-volume ; on l'utilise en
+# priorité, avec repli sur l'image pour un avatar éventuellement embarqué.
+AVATAR_ROOTS = [
+    p for p in (
+        os.environ.get("AVATARS_DIR"),
+        "/runpod-volume/musetalk/results/v15/avatars",
+        "/workspace/musetalk/results/v15/avatars",
+        os.path.join(MUSETALK_ROOT, "results/v15/avatars"),
+    ) if p
+]
+
 # À poser AVANT tout import de transformers : sinon il charge TensorFlow, ce qui
 # bloque l'initialisation du worker (constaté sur le pod).
 os.environ.setdefault("USE_TF", "0")
@@ -127,14 +139,42 @@ _load_models()
 _AVATARS = {}
 
 
+def _resolve_avatars():
+    """
+    La classe Avatar construit ses chemins en dur : ./results/v15/avatars/<id>,
+    relatifs au répertoire courant. On fait donc pointer MUSETALK_ROOT/results
+    vers le premier emplacement qui contient réellement des avatars.
+    """
+    link = os.path.join(MUSETALK_ROOT, "results")
+    for root in AVATAR_ROOTS:
+        if not os.path.isdir(root):
+            continue
+        if os.path.isdir(os.path.join(MUSETALK_ROOT, "results/v15/avatars")) \
+                and os.path.samefile(root, os.path.join(MUSETALK_ROOT, "results/v15/avatars")):
+            return root
+        target = os.path.abspath(os.path.join(root, "..", ".."))  # .../results
+        if os.path.islink(link) or not os.path.exists(link):
+            if os.path.islink(link):
+                os.unlink(link)
+            os.symlink(target, link)
+            print(f"[avatars] results -> {target}", flush=True)
+        return root
+    print(f"[avatars] AUCUN emplacement trouvé parmi {AVATAR_ROOTS}", flush=True)
+    return None
+
+
+_AVATAR_ROOT = _resolve_avatars()
+
+
 def _get_avatar(avatar_id, batch_size):
     """Les avatars pré-calculés sont réutilisés entre les requêtes."""
     if avatar_id not in _AVATARS:
         path = f"./results/v15/avatars/{avatar_id}"
         if not os.path.isdir(path):
             raise FileNotFoundError(
-                f"Avatar '{avatar_id}' introuvable dans {path}. "
-                "Il doit être pré-calculé (latents.pt, coords.pkl, mask/)."
+                f"Avatar '{avatar_id}' introuvable. Cherché dans : {AVATAR_ROOTS}. "
+                "Il doit être pré-calculé (latents.pt, coords.pkl, mask/, full_imgs/) "
+                "et accessible via un volume réseau monté sur /runpod-volume."
             )
         print(f"[avatar] chargement de {avatar_id}", flush=True)
         _AVATARS[avatar_id] = ri.Avatar(

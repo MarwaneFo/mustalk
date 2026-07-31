@@ -7,22 +7,21 @@
 #      --build-arg BASE=ghcr.io/<owner>/musetalk:v1.5 \
 #      -t ghcr.io/<owner>/musetalk-serverless:v1.5 .
 # =============================================================
-ARG BASE=ghcr.io/owner/musetalk:v1.5
+ARG BASE=ghcr.io/marwanefo/musetalk:v1.5
 FROM ${BASE}
 
 # Le SDK RunPod et requests pour récupérer l'audio distant.
 RUN pip install --no-cache-dir runpod requests
 
-# Avatars pré-calculés embarqués dans l'image : sans eux, chaque requête
-# refait la préparation (extraction des frames, latents, masques), soit
-# plusieurs minutes de GPU perdues à chaque démarrage à froid.
-# Placer les dossiers dans ./avatars/<nom>/ du contexte de build.
-COPY avatars/ /opt/MuseTalk/results/v15/avatars/
-
 COPY handler.py /opt/MuseTalk/handler.py
 
+# Les avatars pré-calculés ne sont PAS dans l'image : un seul avatar pèse
+# plusieurs Go (full_imgs). Ils viennent du volume réseau que RunPod monte
+# sur /runpod-volume. L'endpoint Serverless doit donc être créé dans la même
+# région que le volume.
 ENV MUSETALK_ROOT=/opt/MuseTalk \
     AVATAR_ID=Inna \
+    AVATARS_DIR=/runpod-volume/musetalk/results/v15/avatars \
     PYTHONUNBUFFERED=1
 
 WORKDIR /opt/MuseTalk

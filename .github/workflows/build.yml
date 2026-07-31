@@ -3,6 +3,14 @@ name: Build & push MuseTalk image
 on:
   push:
     branches: [main]
+    # L'image de base ne dépend ni du handler ni de la variante Serverless :
+    # inutile de relancer 40 à 90 min de build quand seuls ceux-ci changent.
+    paths-ignore:
+      - handler.py
+      - Dockerfile.serverless
+      - .github/workflows/build-serverless.yml
+      - README.md
+      - install_docker_pod.sh
   workflow_dispatch:
     inputs:
       download_weights:
