@@ -9,6 +9,8 @@ on:
       - handler.py
       - Dockerfile.serverless
       - .github/workflows/build-serverless.yml
+      - Dockerfile.cu124
+      - .github/workflows/build-cu124.yml
       - README.md
       - install_docker_pod.sh
   workflow_dispatch:

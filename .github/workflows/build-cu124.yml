@@ -1,0 +1,77 @@
+name: Build & push image Serverless CUDA 12.4
+
+# Image autonome (code + poids + handler) sur torch 2.4.1 / CUDA 12.4.
+# Corrige le "no kernel image is available" des GPU Ada/Blackwell, que
+# torch 2.0.1+cu118 ne sait pas piloter.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile.cu124
+      - handler.py
+      - download_weights.sh
+      - .github/workflows/build-cu124.yml
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Le runner n'a que ~25 Go libres : on recupere ~30 Go de plus.
+      - name: Liberer de l'espace disque
+        run: |
+          echo "Avant :"; df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/.ghcup /opt/hostedtoolcache/CodeQL \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get purge -y '^llvm-.*' '^mongodb-.*' '^mysql-.*' azure-cli \
+                                google-chrome-stable firefox powershell || true
+          sudo apt-get autoremove -y && sudo apt-get clean
+          sudo docker image prune --all --force
+          echo "Apres :"; df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Connexion a GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nom de l'image en minuscules
+        id: img
+        run: |
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          echo "out=${REGISTRY}/${owner}/musetalk-serverless" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.cu124
+          push: true
+          tags: |
+            ${{ steps.img.outputs.out }}:cu124
+            ${{ steps.img.outputs.out }}:v1.5-cu124
+          provenance: false
+
+      - name: Recapitulatif
+        run: |
+          {
+            echo "## Image Serverless CUDA 12.4 publiee"
+            echo '```'
+            echo "${{ steps.img.outputs.out }}:cu124"
+            echo '```'
+            echo "torch 2.4.1+cu124 — couvre Ampere, Ada et Hopper."
+            echo "L'ancienne image \`:v1.5\` (torch 2.0.1+cu118) reste disponible et intacte."
+          } >> "$GITHUB_STEP_SUMMARY"

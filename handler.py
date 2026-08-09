@@ -103,6 +103,22 @@ def _load_models():
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() else "cpu")
     print(f"[init] device={device} cuda={torch.cuda.is_available()}", flush=True)
 
+    # Sans ces lignes, une incompatibilité entre l'architecture du GPU et les
+    # noyaux compilés dans torch ne se manifeste que par un « CUDA error: no
+    # kernel image is available » au premier .half(), sans dire quel GPU ni
+    # quelles architectures sont supportées. Ici on le voit avant le crash.
+    if torch.cuda.is_available():
+        cap = torch.cuda.get_device_capability(0)
+        archs = torch.cuda.get_arch_list()
+        print(f"[init] torch={torch.__version__} gpu={torch.cuda.get_device_name(0)} "
+              f"capability=sm_{cap[0]}{cap[1]}", flush=True)
+        print(f"[init] architectures compilées dans torch : {archs}", flush=True)
+        if f"sm_{cap[0]}{cap[1]}" not in archs:
+            print(f"[init] !! ATTENTION : sm_{cap[0]}{cap[1]} absent des noyaux compilés. "
+                  "Ce GPU est trop récent pour cette version de torch — le chargement "
+                  "des modèles va échouer. Choisis un autre GPU ou une image plus récente.",
+                  flush=True)
+
     vae, unet, pe = load_all_model(
         unet_model_path=args.unet_model_path,
         vae_type=args.vae_type,

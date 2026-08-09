@@ -1,0 +1,104 @@
+# =============================================================
+#  MuseTalk - image Serverless, CUDA 12.4 / PyTorch 2.4.1
+#
+#  Pourquoi cette variante ?
+#  L'image d'origine embarque torch 2.0.1+cu118, dont les noyaux compiles
+#  s'arretent a l'architecture Hopper. Sur un GPU plus recent (Ada, Blackwell)
+#  le worker meurt au chargement des modeles :
+#      RuntimeError: CUDA error: no kernel image is available for execution
+#  torch 2.4.1+cu124 couvre Ampere, Ada et Hopper.
+#
+#  Image autonome : code + poids + handler. Un seul build, un seul artefact.
+# =============================================================
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+# USE_TF=0 : requirements.txt de MuseTalk tire tensorflow==2.12.0, et
+# transformers l'importe des qu'il le trouve — ce qui bloque l'initialisation.
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    TZ=Etc/UTC \
+    HF_HOME=/root/.cache/huggingface \
+    FFMPEG_PATH=/usr/bin \
+    TORCH_HOME=/opt/torch_cache \
+    USE_TF=0 \
+    USE_TORCH=1
+
+# ---------- 1. Systeme ----------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.10 python3.10-dev python3-pip \
+      git git-lfs curl wget ca-certificates xz-utils unzip \
+      ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+      build-essential ninja-build \
+ && rm -rf /var/lib/apt/lists/* \
+ && ln -sf /usr/bin/python3.10 /usr/bin/python \
+ && ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# ---------- 2. PyTorch CUDA 12.4 ----------
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 \
+      --index-url https://download.pytorch.org/whl/cu124 \
+ && python -c "import torch; print('torch', torch.__version__, '| archs', torch.cuda.get_arch_list())"
+
+# ---------- 3. Code MuseTalk ----------
+ARG MUSETALK_REPO=https://github.com/TMElyralab/MuseTalk.git
+ARG MUSETALK_REF=main
+RUN git clone "${MUSETALK_REPO}" /opt/MuseTalk \
+ && cd /opt/MuseTalk && git checkout "${MUSETALK_REF}" && rm -rf .git
+
+WORKDIR /opt/MuseTalk
+RUN pip install -r requirements.txt \
+ && pip install "huggingface_hub[cli]" gdown \
+ && python -c "import torch; assert torch.__version__.startswith('2.4.1'), torch.__version__; print('torch intact :', torch.__version__)"
+
+# ---------- 4. Pile OpenMMLab pour torch 2.4 ----------
+# mmcv 2.2.0 est la seule roue precompilee publiee pour torch2.4.
+# Mais mmdet 3.3.0 et mmpose 1.3.2 imposent mmcv < 2.2.0 par une assertion
+# dans leur __init__.py. On les installe sans dependances (le setup.py de
+# chumpy, tire par mmpose, ne compile plus avec les setuptools recents) puis
+# on releve ce plafond. MuseTalk n'utilise mmpose que pour DWPose, au moment
+# de la *preparation* d'un avatar ; le handler travaille sur des avatars
+# pre-calcules, donc ce chemin n'est jamais execute — seuls les imports
+# doivent aboutir.
+RUN pip install mmengine \
+ && pip install mmcv==2.2.0 \
+      -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.4/index.html \
+ && pip install json_tricks munkres xtcocotools matplotlib scipy shapely \
+      terminaltables pycocotools six addict yapf \
+ && pip install "mmdet==3.3.0" --no-deps \
+ && pip install "mmpose==1.3.2" --no-deps \
+ && SP=$(python -c "import site; print(site.getsitepackages()[0])") \
+ && sed -i "s/mmcv_maximum_version = '[^']*'/mmcv_maximum_version = '2.3.0'/" \
+      "$SP/mmdet/__init__.py" "$SP/mmpose/__init__.py" \
+ && python -c "import mmcv, mmdet, mmpose, mmengine; print('mmlab OK', mmcv.__version__, mmdet.__version__, mmpose.__version__)"
+
+# ---------- 5. Verification que MuseTalk s'importe ----------
+# Echoue le build plutot que de livrer une image qui crashera au demarrage.
+RUN python -c "\
+import sys; sys.path.insert(0, '/opt/MuseTalk'); \
+from musetalk.utils.utils import load_all_model; \
+from musetalk.utils.audio_processor import AudioProcessor; \
+from musetalk.utils.face_parsing import FaceParsing; \
+import scripts.realtime_inference; \
+print('imports MuseTalk OK')"
+
+# ---------- 6. SDK RunPod ----------
+RUN pip install --no-cache-dir runpod requests
+
+# ---------- 7. Poids (couche la plus lourde, donc tardive) ----------
+COPY download_weights.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/download_weights.sh \
+ && /usr/local/bin/download_weights.sh /opt/MuseTalk/models
+
+# ---------- 8. Handler ----------
+# Les avatars pre-calcules pesent plusieurs Go : ils restent sur le volume
+# reseau, monte sur /runpod-volume par le Serverless.
+COPY handler.py /opt/MuseTalk/handler.py
+
+ENV MUSETALK_ROOT=/opt/MuseTalk \
+    AVATAR_ID=Inna \
+    AVATARS_DIR=/runpod-volume/musetalk/results/v15/avatars
+
+WORKDIR /opt/MuseTalk
+ENTRYPOINT []
+CMD ["python", "-u", "/opt/MuseTalk/handler.py"]
