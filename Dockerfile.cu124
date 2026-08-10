@@ -72,7 +72,21 @@ RUN pip install mmengine \
       "$SP/mmdet/__init__.py" "$SP/mmpose/__init__.py" \
  && python -c "import mmcv, mmdet, mmpose, mmengine; print('mmlab OK', mmcv.__version__, mmdet.__version__, mmpose.__version__)"
 
-# ---------- 5. Verification que MuseTalk s'importe ----------
+# ---------- 5. SDK RunPod ----------
+RUN pip install --no-cache-dir runpod requests
+
+# ---------- 6. Poids (couche la plus lourde, donc tardive) ----------
+COPY download_weights.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/download_weights.sh \
+ && /usr/local/bin/download_weights.sh /opt/MuseTalk/models
+
+# ---------- 7. Verification que MuseTalk s'importe ----------
+# Doit imperativement venir APRES les poids : preprocessing.py appelle
+# init_model() au niveau module et lit ./models/dwpose/dw-ll_ucoco_384.pth
+# des l'import. Place avant, ce controle echoue sur un FileNotFoundError.
+# Effet de bord utile : l'import de face_detection telecharge s3fd dans
+# TORCH_HOME, ce qui le fige dans l'image au lieu de le retelecharger a
+# chaque demarrage de worker.
 # Echoue le build plutot que de livrer une image qui crashera au demarrage.
 RUN python -c "\
 import sys; sys.path.insert(0, '/opt/MuseTalk'); \
@@ -81,14 +95,6 @@ from musetalk.utils.audio_processor import AudioProcessor; \
 from musetalk.utils.face_parsing import FaceParsing; \
 import scripts.realtime_inference; \
 print('imports MuseTalk OK')"
-
-# ---------- 6. SDK RunPod ----------
-RUN pip install --no-cache-dir runpod requests
-
-# ---------- 7. Poids (couche la plus lourde, donc tardive) ----------
-COPY download_weights.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/download_weights.sh \
- && /usr/local/bin/download_weights.sh /opt/MuseTalk/models
 
 # ---------- 8. Handler ----------
 # Les avatars pre-calcules pesent plusieurs Go : ils restent sur le volume
