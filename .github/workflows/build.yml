@@ -11,6 +11,9 @@ on:
       - .github/workflows/build-serverless.yml
       - Dockerfile.cu124
       - .github/workflows/build-cu124.yml
+      - Dockerfile.slim
+      - .github/workflows/build-slim.yml
+      - .github/workflows/build.yml
       - README.md
       - install_docker_pod.sh
   workflow_dispatch:

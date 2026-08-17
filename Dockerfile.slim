@@ -1,0 +1,107 @@
+# =============================================================
+#  MuseTalk - image Serverless allegee (CUDA 12.4 / torch 2.4.1)
+#
+#  Identique a Dockerfile.cu124 sur le fond, mais degraissee : le worker
+#  RunPod n'arrivait pas au bout du telechargement des 15,28 Go et
+#  redemarrait en boucle sans jamais passer "ready".
+#
+#  Deux economies, sans toucher a ce qui fait tourner MuseTalk :
+#
+#  1. Base "runtime" au lieu de "devel". Le devel embarque nvcc et tout
+#     le toolkit de compilation CUDA (~7 Go extraits) dont on n'a pas
+#     besoin : mmcv, torch et mmdet s'installent depuis des roues deja
+#     compilees. build-essential reste present pour les rares paquets
+#     sans roue (xtcocotools, pycocotools).
+#
+#  2. tensorflow retire. requirements.txt de MuseTalk le pin en 2.12.0
+#     (~2,5 Go installes) mais le projet est du pur PyTorch : USE_TF=0
+#     empeche deja transformers de l'importer. Si quoi que ce soit en
+#     dependait, l'etape de verification des imports plus bas ferait
+#     echouer le build — donc ce retrait est verifie, pas suppose.
+# =============================================================
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    TZ=Etc/UTC \
+    HF_HOME=/root/.cache/huggingface \
+    FFMPEG_PATH=/usr/bin \
+    TORCH_HOME=/opt/torch_cache \
+    USE_TF=0 \
+    USE_TORCH=1
+
+# ---------- 1. Systeme ----------
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.10 python3.10-dev python3-pip \
+      git git-lfs curl wget ca-certificates xz-utils unzip \
+      ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+      build-essential ninja-build \
+ && rm -rf /var/lib/apt/lists/* \
+ && ln -sf /usr/bin/python3.10 /usr/bin/python \
+ && ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# ---------- 2. PyTorch CUDA 12.4 ----------
+RUN pip install --upgrade pip setuptools wheel \
+ && pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 \
+      --index-url https://download.pytorch.org/whl/cu124 \
+ && python -c "import torch; print('torch', torch.__version__)"
+
+# ---------- 3. Code MuseTalk ----------
+ARG MUSETALK_REPO=https://github.com/TMElyralab/MuseTalk.git
+ARG MUSETALK_REF=main
+RUN git clone "${MUSETALK_REPO}" /opt/MuseTalk \
+ && cd /opt/MuseTalk && git checkout "${MUSETALK_REF}" && rm -rf .git
+
+WORKDIR /opt/MuseTalk
+RUN grep -viE '^(tensorflow|tensorboard)' requirements.txt > /tmp/req.txt \
+ && echo "--- requirements retenus ---" && cat /tmp/req.txt \
+ && pip install -r /tmp/req.txt \
+ && pip install "huggingface_hub[cli]" gdown \
+ && python -c "import torch; assert torch.__version__.startswith('2.4.1'), torch.__version__; print('torch intact :', torch.__version__)"
+
+# ---------- 4. Pile OpenMMLab pour torch 2.4 ----------
+# mmcv 2.2.0 est la seule roue publiee pour torch2.4, mais mmdet 3.3.0 et
+# mmpose 1.3.2 imposent mmcv < 2.2.0 par assertion : on installe sans
+# dependances puis on releve le plafond.
+RUN pip install mmengine \
+ && pip install mmcv==2.2.0 \
+      -f https://download.openmmlab.com/mmcv/dist/cu121/torch2.4/index.html \
+ && pip install json_tricks munkres xtcocotools matplotlib scipy shapely \
+      terminaltables pycocotools six addict yapf \
+ && pip install "mmdet==3.3.0" --no-deps \
+ && pip install "mmpose==1.3.2" --no-deps \
+ && SP=$(python -c "import site; print(site.getsitepackages()[0])") \
+ && sed -i "s/mmcv_maximum_version = '[^']*'/mmcv_maximum_version = '2.3.0'/" \
+      "$SP/mmdet/__init__.py" "$SP/mmpose/__init__.py" \
+ && python -c "import mmcv, mmdet, mmpose, mmengine; print('mmlab OK', mmcv.__version__, mmdet.__version__, mmpose.__version__)"
+
+# ---------- 5. SDK RunPod ----------
+RUN pip install --no-cache-dir runpod requests
+
+# ---------- 6. Poids ----------
+COPY download_weights.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/download_weights.sh \
+ && /usr/local/bin/download_weights.sh /opt/MuseTalk/models
+
+# ---------- 7. Verification ----------
+# Apres les poids : preprocessing.py lit ./models/dwpose/... des l'import.
+# Valide aussi que le retrait de tensorflow ne casse rien.
+RUN python -c "\
+import sys; sys.path.insert(0, '/opt/MuseTalk'); \
+from musetalk.utils.utils import load_all_model; \
+from musetalk.utils.audio_processor import AudioProcessor; \
+from musetalk.utils.face_parsing import FaceParsing; \
+import scripts.realtime_inference; \
+print('imports MuseTalk OK (sans tensorflow)')"
+
+# ---------- 8. Handler ----------
+COPY handler.py /opt/MuseTalk/handler.py
+
+ENV MUSETALK_ROOT=/opt/MuseTalk \
+    AVATAR_ID=Inna \
+    AVATARS_DIR=/runpod-volume/musetalk/results/v15/avatars
+
+WORKDIR /opt/MuseTalk
+ENTRYPOINT []
+CMD ["python", "-u", "/opt/MuseTalk/handler.py"]
