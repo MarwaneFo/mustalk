@@ -12,6 +12,9 @@ on:
       - Dockerfile.cu124
       - .github/workflows/build-cu124.yml
       - Dockerfile.slim
+      - Dockerfile.standalone
+      - avatar/**
+      - .github/workflows/build-standalone.yml
       - .github/workflows/build-slim.yml
       - .github/workflows/build.yml
       - README.md

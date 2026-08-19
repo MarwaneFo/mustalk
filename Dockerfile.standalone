@@ -1,0 +1,47 @@
+# =============================================================
+#  MuseTalk Serverless - image AUTONOME (avatar embarque)
+#
+#  Pourquoi cette variante ?
+#  Tant que l'avatar vit sur un network volume, l'endpoint est verrouille
+#  sur le data center de ce volume (us-nc-1), ou la capacite GPU s'est
+#  revelee quasi nulle : aucun worker alloue en plusieurs heures d'essais.
+#  En embarquant l'avatar, le volume devient inutile et TOUS les data
+#  centers redeviennent eligibles.
+#
+#  Astuce de taille : full_imgs pese 3,2 Go a lui seul, alors que ce ne sont
+#  que les frames extraites de Inna.mp4. On embarque donc la video (26 Mo)
+#  et le handler regenere les frames au demarrage avec ffmpeg. L'image ne
+#  grossit que d'environ 120 Mo au lieu de 3,4 Go.
+#
+#  Construite par-dessus :cu124 : le build prend 2 min au lieu de 30.
+# =============================================================
+ARG BASE=ghcr.io/marwanefo/musetalk-serverless:cu124
+FROM ${BASE}
+
+# ---------- Avatar (partie legere) ----------
+# L'archive est decoupee en morceaux de 45 Mo : GitHub refuse les fichiers
+# de plus de 100 Mo et en deconseille au-dela de 50.
+COPY avatar/inna_light.tgz.part* /tmp/av/
+RUN mkdir -p /opt/MuseTalk/results/v15/avatars \
+ && cat /tmp/av/inna_light.tgz.part* | tar xz -C /opt/MuseTalk/results/v15/avatars \
+ && rm -rf /tmp/av \
+ && echo "--- avatar embarque ---" \
+ && ls -la /opt/MuseTalk/results/v15/avatars/Inna \
+ && echo "masques : $(ls /opt/MuseTalk/results/v15/avatars/Inna/mask | wc -l)"
+
+# ---------- Video source (pour regenerer full_imgs) ----------
+COPY avatar/Inna.mp4 /opt/MuseTalk/data/video/Inna.mp4
+
+COPY handler.py /opt/MuseTalk/handler.py
+
+# AVATARS_DIR vide : le handler filtre les valeurs vides, il tombera donc
+# sur l'avatar embarque dans l'image au lieu de chercher /runpod-volume.
+ENV MUSETALK_ROOT=/opt/MuseTalk \
+    AVATAR_ID=Inna \
+    AVATARS_DIR="" \
+    AVATAR_VIDEO=/opt/MuseTalk/data/video/Inna.mp4 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /opt/MuseTalk
+ENTRYPOINT []
+CMD ["python", "-u", "/opt/MuseTalk/handler.py"]

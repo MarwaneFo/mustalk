@@ -27,6 +27,7 @@ import sys
 import base64
 import shutil
 import tempfile
+import subprocess
 import time
 import argparse
 import traceback
@@ -182,6 +183,50 @@ def _resolve_avatars():
 _AVATAR_ROOT = _resolve_avatars()
 
 
+def _ensure_frames(avatar_id):
+    """
+    full_imgs pèse 3,2 Go : trop lourd pour une image Docker. On ne l'embarque
+    donc pas, on le régénère au démarrage depuis la vidéo source — MuseTalk
+    l'avait lui-même produit par extraction de frames, en 1920x1080 nommées
+    00000000.png…, ce que ffmpeg reproduit à l'identique.
+
+    Coût : environ 1 à 2 min, une seule fois par worker.
+    """
+    base = f"./results/v15/avatars/{avatar_id}"
+    full = os.path.join(base, "full_imgs")
+    mask = os.path.join(base, "mask")
+    if not os.path.isdir(mask):
+        return  # avatar monté depuis un volume : rien à régénérer
+    n_mask = len(os.listdir(mask))
+    n_full = len(os.listdir(full)) if os.path.isdir(full) else 0
+    if n_full >= n_mask > 0:
+        return
+
+    video = os.environ.get("AVATAR_VIDEO", f"/opt/MuseTalk/data/video/{avatar_id}.mp4")
+    if not os.path.exists(video):
+        raise FileNotFoundError(
+            f"Vidéo source absente : {video}. Elle est nécessaire pour "
+            f"régénérer full_imgs ({n_mask} frames attendues)."
+        )
+
+    print(f"[frames] extraction de {n_mask} frames depuis {video}", flush=True)
+    t = time.time()
+    os.makedirs(full, exist_ok=True)
+    subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-i", video,
+         "-start_number", "0", os.path.join(full, "%08d.png")],
+        check=True,
+    )
+
+    # ffmpeg peut produire plus de frames que l'avatar n'en référence
+    # (coords.pkl et mask/ font foi) : on élague le surplus pour garder
+    # l'alignement entre les listes.
+    names = sorted(os.listdir(full))
+    for extra in names[n_mask:]:
+        os.remove(os.path.join(full, extra))
+    print(f"[frames] {len(os.listdir(full))} frames prêtes en {time.time()-t:.0f}s", flush=True)
+
+
 def _get_avatar(avatar_id, batch_size):
     """Les avatars pré-calculés sont réutilisés entre les requêtes."""
     if avatar_id not in _AVATARS:
@@ -192,6 +237,7 @@ def _get_avatar(avatar_id, batch_size):
                 "Il doit être pré-calculé (latents.pt, coords.pkl, mask/, full_imgs/) "
                 "et accessible via un volume réseau monté sur /runpod-volume."
             )
+        _ensure_frames(avatar_id)
         print(f"[avatar] chargement de {avatar_id}", flush=True)
         _AVATARS[avatar_id] = ri.Avatar(
             avatar_id=avatar_id,
