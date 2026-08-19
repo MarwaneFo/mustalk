@@ -8,6 +8,7 @@ on:
       - Dockerfile.standalone
       - handler.py
       - avatar/**
+      - .dockerignore
       - .github/workflows/build-standalone.yml
 
 env:
