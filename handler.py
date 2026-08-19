@@ -195,6 +195,15 @@ def _ensure_frames(avatar_id):
     base = f"./results/v15/avatars/{avatar_id}"
     full = os.path.join(base, "full_imgs")
     mask = os.path.join(base, "mask")
+
+    # MuseTalk ecrit ses PNG intermediaires dans tmp/ et la video finale dans
+    # vid_output/, mais ne cree ces dossiers qu'en mode preparation. Avec un
+    # avatar pre-calcule ils doivent donc exister au prealable. Pire : les
+    # appels ffmpeg passent par os.system(), qui echoue SANS remonter d'erreur
+    # -- l'absence du dossier se traduit simplement par une video manquante.
+    for d in ("tmp", "vid_output"):
+        os.makedirs(os.path.join(base, d), exist_ok=True)
+
     if not os.path.isdir(mask):
         return  # avatar monté depuis un volume : rien à régénérer
     n_mask = len(os.listdir(mask))
