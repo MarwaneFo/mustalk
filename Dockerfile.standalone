@@ -19,11 +19,18 @@ ARG BASE=ghcr.io/marwanefo/musetalk-serverless:cu124
 FROM ${BASE}
 
 # ---------- Avatar (partie legere) ----------
+# --no-same-owner est INDISPENSABLE : l'archive vient d'un volume reseau RunPod
+# ou les fichiers appartiennent a l'UID 100000. Sans cette option, tar restaure
+# ce proprietaire dans la couche, et le moteur de conteneurs de RunPod -- qui
+# remappe les UID -- refuse d'extraire l'image :
+#   failed to register layer: container ID 100000 cannot be mapped to a host ID
+# Le telechargement aboutit, l'extraction echoue, le worker boucle a l'infini.
+#
 # L'archive est decoupee en morceaux de 45 Mo : GitHub refuse les fichiers
 # de plus de 100 Mo et en deconseille au-dela de 50.
 COPY avatar/inna_light.tgz.part* /tmp/av/
 RUN mkdir -p /opt/MuseTalk/results/v15/avatars \
- && cat /tmp/av/inna_light.tgz.part* | tar xz -C /opt/MuseTalk/results/v15/avatars \
+ && cat /tmp/av/inna_light.tgz.part* | tar xz --no-same-owner -C /opt/MuseTalk/results/v15/avatars \
  && rm -rf /tmp/av \
  && echo "--- avatar embarque ---" \
  && ls -la /opt/MuseTalk/results/v15/avatars/Inna \
