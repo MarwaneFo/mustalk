@@ -6,3 +6,9 @@
 **/*.mp4
 **/*.avi
 **/.ipynb_checkpoints
+
+# Le dossier avatar/ doit rester dans le contexte de build : il contient la
+# video source et l'archive de l'avatar embarque. Sans cette exception,
+# la regle **/*.mp4 ci-dessus exclut avatar/Inna.mp4 et le COPY echoue.
+!avatar/
+!avatar/**
