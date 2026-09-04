@@ -12,3 +12,7 @@
 # la regle **/*.mp4 ci-dessus exclut avatar/Inna.mp4 et le COPY echoue.
 !avatar/
 !avatar/**
+
+# La voix de reference XTTS doit rester dans le contexte de build.
+!xtts/
+!xtts/**

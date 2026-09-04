@@ -14,6 +14,8 @@ on:
       - Dockerfile.slim
       - Dockerfile.standalone
       - avatar/**
+      - xtts/**
+      - .github/workflows/build-xtts.yml
       - .github/workflows/build-standalone.yml
       - .github/workflows/build-slim.yml
       - .github/workflows/build.yml

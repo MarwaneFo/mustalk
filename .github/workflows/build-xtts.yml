@@ -1,0 +1,65 @@
+name: Build & push XTTS-v2
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - xtts/**
+      - .github/workflows/build-xtts.yml
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Liberer de l'espace disque
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/.ghcup /opt/hostedtoolcache/CodeQL "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean && df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nom de l'image
+        id: img
+        run: |
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          echo "out=${REGISTRY}/${owner}/xtts-serverless" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: xtts/Dockerfile
+          push: true
+          tags: ${{ steps.img.outputs.out }}:latest
+          provenance: false
+
+      - name: Recapitulatif
+        run: |
+          {
+            echo "## XTTS-v2 publie"
+            echo '```'
+            echo "${{ steps.img.outputs.out }}:latest"
+            echo '```'
+            echo "Entree : texte + voix de reference. Sortie : WAV en base64."
+            echo ""
+            echo "**Licence** : poids XTTS-v2 sous Coqui Public Model License,"
+            echo "usage non commercial uniquement."
+            echo ""
+            echo "GPU : eviter les Blackwell (PRO 6000), non couverts par torch 2.4.1."
+          } >> "$GITHUB_STEP_SUMMARY"
