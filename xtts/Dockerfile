@@ -35,7 +35,7 @@ RUN pip install --upgrade pip setuptools wheel \
 # 2.4.1 installe ci-dessus. La 0.25.3 se contente de torch>=2.1 et
 # epingle numpy<2.0, ce qui ecarte au passage le conflit binaire
 # numpy 2 / opencv. XTTS-v2 y est pleinement supporte.
-RUN pip install "coqui-tts==0.25.3" runpod requests 
+RUN pip install "coqui-tts==0.25.3" runpod requests \
  && python -c "import TTS, numpy, transformers; print('coqui-tts', TTS.__version__, 'numpy', numpy.__version__, 'transformers', transformers.__version__)"
 
 # Poids XTTS-v2 (~2 Go), telecharges au build : les tirer au demarrage
