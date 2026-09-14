@@ -276,6 +276,57 @@ FPS_MODELE = 25
 _FPS_SOURCE = {}
 
 
+class _ImagesDisque:
+    """Sequence d'images du disque, lues a la demande et jamais toutes en RAM.
+
+    MuseTalk charge full_imgs entierement au demarrage : 1926 images en
+    1920x1080, soit une dizaine de gigaoctets decodes et une bonne minute
+    de decodage, avant meme que le worker n'accepte un job. Or chaque image
+    n'est lue qu'une fois par generation, au moment de recoller la bouche.
+
+    On rend donc un objet qui se comporte comme la liste attendue mais va
+    chercher l'image au dernier moment. Le surcout est d'environ 15 ms par
+    image, a comparer aux ~500 ms que coute deja son traitement.
+    """
+
+    def __init__(self, chemins):
+        self._chemins = list(chemins)
+
+    def __len__(self):
+        return len(self._chemins)
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
+            return _ImagesDisque(self._chemins[i])
+        import cv2
+        img = cv2.imread(self._chemins[i])
+        if img is None:
+            raise FileNotFoundError(f"image illisible : {self._chemins[i]}")
+        return img
+
+    def sous_ensemble(self, indices):
+        return _ImagesDisque([self._chemins[i] for i in indices])
+
+
+def _installer_lecture_paresseuse():
+    """Detourne read_imgs, mais pour les seules images plein cadre.
+
+    Les masques sont petits (112 Mo au total) et relus a chaque image : les
+    garder en memoire reste le bon choix. Ce sont les images 1080p qui
+    coutent cher, et elles seules.
+    """
+    origine = ri.read_imgs
+
+    def read_imgs(chemins):
+        if chemins and "full_imgs" in str(chemins[0]).replace("\\", "/"):
+            print(f"[demarrage] {len(chemins)} images plein cadre lues a la demande",
+                  flush=True)
+            return _ImagesDisque(chemins)
+        return origine(chemins)
+
+    ri.read_imgs = read_imgs
+
+
 def _video_source(avatar_id):
     return os.environ.get("AVATAR_VIDEO",
                           f"/opt/MuseTalk/data/video/{avatar_id}.mp4")
@@ -340,24 +391,32 @@ def _ensure_frames(avatar_id):
 
     if not os.path.isdir(mask):
         return  # avatar monté depuis un volume : rien à régénérer
+    # mask/ contient l'aller ET le retour inverse : 3852 entrees pour une
+    # video de 1926 images. Le nombre d'images a extraire est donc la moitie.
     n_mask = len(os.listdir(mask))
+    n_images = (n_mask + 1) // 2
     n_full = len(os.listdir(full)) if os.path.isdir(full) else 0
-    if n_full >= n_mask > 0:
+    if n_full >= n_images > 0:
         return
 
     video = _video_source(avatar_id)
     if not os.path.exists(video):
         raise FileNotFoundError(
             f"Vidéo source absente : {video}. Elle est nécessaire pour "
-            f"régénérer full_imgs ({n_mask} frames attendues)."
+            f"régénérer full_imgs ({n_images} images attendues)."
         )
 
-    print(f"[frames] extraction de {n_mask} frames depuis {video}", flush=True)
+    print(f"[frames] extraction depuis {video}", flush=True)
     t = time.time()
     os.makedirs(full, exist_ok=True)
+    # JPEG plutot que PNG : ces images ne servent que de fond, la bouche
+    # etant recollee par-dessus, et la sortie finale repasse de toute facon
+    # par libx264. L'encodage sans perte du PNG coutait ici une minute de
+    # demarrage et 3,2 Go de disque, pour un gain invisible. -q:v 2 est le
+    # meilleur reglage JPEG de ffmpeg, visuellement indistinct.
     subprocess.run(
-        ["ffmpeg", "-y", "-v", "error", "-i", video,
-         "-start_number", "0", os.path.join(full, "%08d.png")],
+        ["ffmpeg", "-y", "-v", "error", "-i", video, "-q:v", "2",
+         "-start_number", "0", os.path.join(full, "%08d.jpg")],
         check=True,
     )
 
@@ -365,7 +424,7 @@ def _ensure_frames(avatar_id):
     # (coords.pkl et mask/ font foi) : on élague le surplus pour garder
     # l'alignement entre les listes.
     names = sorted(os.listdir(full))
-    for extra in names[n_mask:]:
+    for extra in names[n_images:]:
         os.remove(os.path.join(full, extra))
     print(f"[frames] {len(os.listdir(full))} frames prêtes en {time.time()-t:.0f}s", flush=True)
 
@@ -398,7 +457,13 @@ def _recadencer(avatar, fps_source):
     choix = [min(n - 1, int(round(j * fps_source / FPS_MODELE))) for j in range(m)]
     for nom in listes:
         source = getattr(avatar, nom)
-        setattr(avatar, nom, [source[i] for i in choix])
+        # Sur les images paresseuses on selectionne des chemins, pas des
+        # images : les indexer une a une les chargerait toutes en RAM,
+        # exactement ce qu'on cherche a eviter.
+        if isinstance(source, _ImagesDisque):
+            setattr(avatar, nom, source.sous_ensemble(choix))
+        else:
+            setattr(avatar, nom, [source[i] for i in choix])
     print(f"[cadence] {fps_source:.0f} -> {FPS_MODELE} i/s : "
           f"{n} images ramenees a {m}", flush=True)
 
@@ -414,6 +479,7 @@ def _get_avatar(avatar_id, batch_size):
                 "et accessible via un volume réseau monté sur /runpod-volume."
             )
         _ensure_frames(avatar_id)
+        _installer_lecture_paresseuse()
         print(f"[avatar] chargement de {avatar_id}", flush=True)
         _AVATARS[avatar_id] = ri.Avatar(
             avatar_id=avatar_id,
