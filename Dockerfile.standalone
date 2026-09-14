@@ -39,6 +39,30 @@ RUN mkdir -p /opt/MuseTalk/results/v15/avatars \
 # ---------- Video source (pour regenerer full_imgs) ----------
 COPY avatar/Inna.mp4 /opt/MuseTalk/data/video/Inna.mp4
 
+
+# ---------- Restauration de visage (optionnelle) ----------
+# MuseTalk genere la bouche a basse resolution avant de la recoller dans
+# une image 1080p : la zone regeneree est donc plus molle que le reste du
+# visage. GFPGAN reconstruit du detail, applique aux seules images produites
+# (leur nombre suit la duree de l audio, pas celle de l avatar).
+#
+# basicsr importe torchvision.transforms.functional_tensor, supprime depuis
+# torchvision 0.17. On corrige l import plutot que de retrograder torchvision,
+# dont dependent MuseTalk et la pile OpenMMLab.
+RUN pip install --no-cache-dir gfpgan==1.3.8 \
+ && SP=$(python -c "import site; print(site.getsitepackages()[0])") \
+ && grep -rl "torchvision.transforms.functional_tensor" "$SP/basicsr" \
+      | xargs -r sed -i "s/torchvision.transforms.functional_tensor/torchvision.transforms.functional/g" \
+ && python -c "from gfpgan import GFPGANer; print('gfpgan importable')"
+
+# Poids GFPGAN (~350 Mo), telecharges au build comme le reste.
+RUN mkdir -p /opt/gfpgan \
+ && curl -fsSL -o /opt/gfpgan/GFPGANv1.4.pth \
+      https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth \
+ && ls -la /opt/gfpgan/
+
+ENV GFPGAN_MODEL=/opt/gfpgan/GFPGANv1.4.pth
+
 COPY handler.py /opt/MuseTalk/handler.py
 
 # AVATARS_DIR vide : le handler filtre les valeurs vides, il tombera donc

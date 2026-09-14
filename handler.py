@@ -15,7 +15,8 @@ Entrée attendue :
     "audio_url":    "https://...",    # ou "audio_base64"
     "audio_base64": "...",
     "fps":          25,
-    "batch_size":   20
+    "batch_size":   20,
+    "restore_face": false          # GFPGAN sur les images produites
   }
 }
 
@@ -37,6 +38,7 @@ import runpod
 
 MUSETALK_ROOT = os.environ.get("MUSETALK_ROOT", "/opt/MuseTalk")
 DEFAULT_AVATAR = os.environ.get("AVATAR_ID", "Inna")
+GFPGAN_MODEL = os.environ.get("GFPGAN_MODEL", "/opt/gfpgan/GFPGANv1.4.pth")
 
 # Les avatars pré-calculés pèsent plusieurs Go (full_imgs) : trop pour une image.
 # RunPod Serverless monte le volume réseau sur /runpod-volume ; on l'utilise en
@@ -183,6 +185,50 @@ def _resolve_avatars():
 _AVATAR_ROOT = _resolve_avatars()
 
 
+_GFP = None
+
+
+def _restaurer(dossier):
+    """
+    Passe GFPGAN sur les images generees par MuseTalk.
+
+    MuseTalk regenere la bouche a basse resolution avant de la recoller dans
+    l'image d'origine : la zone traitee est donc plus molle que le reste du
+    visage. GFPGAN y reconstruit du detail.
+
+    Le modele n'est charge qu'au premier appel : inutile de payer ~10 s de
+    chargement sur chaque worker si l'option n'est jamais demandee.
+    """
+    global _GFP
+    import cv2
+
+    fichiers = sorted(f for f in os.listdir(dossier) if f.endswith(".png"))
+    if not fichiers:
+        raise RuntimeError(f"Aucune image a restaurer dans {dossier}")
+
+    if _GFP is None:
+        from gfpgan import GFPGANer
+        t = time.time()
+        _GFP = GFPGANer(model_path=GFPGAN_MODEL, upscale=1, arch="clean",
+                        channel_multiplier=2, bg_upsampler=None)
+        print(f"[restore] GFPGAN charge en {time.time()-t:.0f}s", flush=True)
+
+    t = time.time()
+    for i, nom in enumerate(fichiers):
+        chemin = os.path.join(dossier, nom)
+        img = cv2.imread(chemin)
+        # paste_back recolle le visage restaure dans l'image complete ;
+        # sans lui on n'obtiendrait que la vignette du visage.
+        _, _, restauree = _GFP.enhance(img, has_aligned=False,
+                                       only_center_face=True, paste_back=True)
+        if restauree is not None:
+            cv2.imwrite(chemin, restauree)
+        if (i + 1) % 100 == 0:
+            print(f"[restore] {i+1}/{len(fichiers)}", flush=True)
+
+    print(f"[restore] {len(fichiers)} images en {time.time()-t:.0f}s", flush=True)
+
+
 def _ensure_frames(avatar_id):
     """
     full_imgs pèse 3,2 Go : trop lourd pour une image Docker. On ne l'embarque
@@ -286,9 +332,44 @@ def handler(job):
         avatar = _get_avatar(avatar_id, batch_size)
 
         out_name = f"job_{int(started)}"
-        avatar.inference(audio_path, out_name, fps, False)
-
         out_path = os.path.join(avatar.video_out_path, f"{out_name}.mp4")
+        restaurer = bool(job_input.get("restore_face", False))
+
+        if not restaurer:
+            ri.args.skip_save_images = False
+            avatar.inference(audio_path, out_name, fps, False)
+        else:
+            # MuseTalk conditionne l'ecriture des images au PARAMETRE
+            # skip_save_images, mais l'encodage a la variable GLOBALE
+            # args.skip_save_images. En les dissociant, on obtient les images
+            # sans encodage ni suppression du dossier tmp -- exactement le
+            # point d'insertion voulu, sans toucher a leur code.
+            ri.args.skip_save_images = True
+            try:
+                avatar.inference(audio_path, out_name, fps, False)
+                tmp = os.path.join(avatar.avatar_path, "tmp")
+                _restaurer(tmp)
+
+                temp_mp4 = os.path.join(avatar.avatar_path, "temp.mp4")
+                subprocess.run(
+                    ["ffmpeg", "-y", "-v", "error", "-r", str(fps), "-f", "image2",
+                     "-i", os.path.join(tmp, "%08d.png"), "-vcodec", "libx264",
+                     "-vf", "format=yuv420p", "-crf", "18", temp_mp4],
+                    check=True)
+                os.makedirs(avatar.video_out_path, exist_ok=True)
+                subprocess.run(
+                    ["ffmpeg", "-y", "-v", "error", "-i", audio_path,
+                     "-i", temp_mp4, out_path],
+                    check=True)
+                for chemin in (temp_mp4,):
+                    if os.path.exists(chemin):
+                        os.remove(chemin)
+                shutil.rmtree(tmp, ignore_errors=True)
+            finally:
+                # Ne pas laisser la globale modifiee : le worker sert
+                # plusieurs requetes, la suivante attend le comportement normal.
+                ri.args.skip_save_images = False
+
         if not os.path.exists(out_path):
             raise RuntimeError(f"Vidéo non produite : {out_path}")
 
@@ -299,6 +380,7 @@ def handler(job):
         return {
             "avatar_id": avatar_id,
             "duration_s": round(time.time() - started, 2),
+            "restore_face": restaurer,
             "video_base64": video_b64,
         }
     except Exception as e:
