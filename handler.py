@@ -16,7 +16,9 @@ Entrée attendue :
     "audio_base64": "...",
     "fps":          25,
     "batch_size":   20,
-    "restore_face": false          # GFPGAN sur les images produites
+    "restore_face": false,         # GFPGAN sur les images produites
+    "restore_strength": 0.35,      # dosage ; 1.0 lisse trop, 0.3 garde la peau
+    "skin_grain": 0.0              # grain reintroduit (0.02 a 0.05)
   }
 }
 
@@ -188,23 +190,38 @@ _AVATAR_ROOT = _resolve_avatars()
 _GFP = None
 
 
-def _restaurer(dossier):
+def _restaurer(dossier, force=0.35, grain=0.0):
     """
-    Passe GFPGAN sur les images generees par MuseTalk.
+    Repasse sur les images produites par MuseTalk pour en adoucir le defaut
+    le plus visible : la bouche, regeneree a basse resolution, ressort molle
+    a cote d'un visage reste net.
 
-    MuseTalk regenere la bouche a basse resolution avant de la recoller dans
-    l'image d'origine : la zone traitee est donc plus molle que le reste du
-    visage. GFPGAN y reconstruit du detail.
+    Deux reglages, parce que la restauration brute rend le visage artificiel :
 
-    Le modele n'est charge qu'au premier appel : inutile de payer ~10 s de
-    chargement sur chaque worker si l'option n'est jamais demandee.
+    force -- dosage du melange entre l'image d'origine et sa version
+        restauree. GFPGAN est entraine a produire des visages "propres" :
+        applique en entier (force=1.0) il efface pores, grain et micro-
+        irregularites, et c'est precisement ce qui fait qu'un visage sonne
+        synthetique. Autour de 0.3 on recupere de la nettete en conservant
+        la texture de la captation d'origine.
+
+    grain -- bruit leger reintroduit apres coup. Une peau parfaitement lisse
+        n'existe pas dans une vraie image : un grain discret (0.02 a 0.05)
+        raccorde la zone traitee au reste du visage.
+
+    Le modele n'est charge qu'au premier appel : inutile de payer son
+    chargement sur un worker ou l'option n'est jamais demandee.
     """
     global _GFP
     import cv2
+    import numpy as np
 
     fichiers = sorted(f for f in os.listdir(dossier) if f.endswith(".png"))
     if not fichiers:
         raise RuntimeError(f"Aucune image a restaurer dans {dossier}")
+
+    force = max(0.0, min(1.0, float(force)))
+    grain = max(0.0, min(0.2, float(grain)))
 
     if _GFP is None:
         from gfpgan import GFPGANer
@@ -213,20 +230,41 @@ def _restaurer(dossier):
                         channel_multiplier=2, bg_upsampler=None)
         print(f"[restore] GFPGAN charge en {time.time()-t:.0f}s", flush=True)
 
+    print(f"[restore] force={force} grain={grain} sur {len(fichiers)} images",
+          flush=True)
     t = time.time()
+    rng = np.random.default_rng(0)   # graine fixe : pas de scintillement
+
     for i, nom in enumerate(fichiers):
         chemin = os.path.join(dossier, nom)
         img = cv2.imread(chemin)
+        if img is None:
+            continue
+
         # paste_back recolle le visage restaure dans l'image complete ;
         # sans lui on n'obtiendrait que la vignette du visage.
         _, _, restauree = _GFP.enhance(img, has_aligned=False,
                                        only_center_face=True, paste_back=True)
-        if restauree is not None:
-            cv2.imwrite(chemin, restauree)
+        if restauree is None:
+            continue
+
+        if force < 1.0:
+            sortie = cv2.addWeighted(restauree, force, img, 1.0 - force, 0.0)
+        else:
+            sortie = restauree
+
+        if grain > 0:
+            # Bruit gaussien leger, identique d'une image a l'autre pour ne
+            # pas produire de fourmillement a la lecture.
+            bruit = rng.normal(0.0, grain * 255.0, sortie.shape)
+            sortie = np.clip(sortie.astype(np.float32) + bruit, 0, 255).astype(np.uint8)
+
+        cv2.imwrite(chemin, sortie)
+
         if (i + 1) % 100 == 0:
             print(f"[restore] {i+1}/{len(fichiers)}", flush=True)
 
-    print(f"[restore] {len(fichiers)} images en {time.time()-t:.0f}s", flush=True)
+    print(f"[restore] termine en {time.time()-t:.0f}s", flush=True)
 
 
 def _ensure_frames(avatar_id):
@@ -334,6 +372,10 @@ def handler(job):
         out_name = f"job_{int(started)}"
         out_path = os.path.join(avatar.video_out_path, f"{out_name}.mp4")
         restaurer = bool(job_input.get("restore_face", False))
+        # 0.35 par defaut plutot que 1.0 : la restauration complete lisse la
+        # peau au point de rendre le visage artificiel.
+        force_restauration = float(job_input.get("restore_strength", 0.35))
+        grain_peau = float(job_input.get("skin_grain", 0.0))
 
         if not restaurer:
             ri.args.skip_save_images = False
@@ -348,7 +390,7 @@ def handler(job):
             try:
                 avatar.inference(audio_path, out_name, fps, False)
                 tmp = os.path.join(avatar.avatar_path, "tmp")
-                _restaurer(tmp)
+                _restaurer(tmp, force=force_restauration, grain=grain_peau)
 
                 temp_mp4 = os.path.join(avatar.avatar_path, "temp.mp4")
                 subprocess.run(
@@ -381,6 +423,8 @@ def handler(job):
             "avatar_id": avatar_id,
             "duration_s": round(time.time() - started, 2),
             "restore_face": restaurer,
+            "restore_strength": force_restauration if restaurer else None,
+            "skin_grain": grain_peau if restaurer else None,
             "video_base64": video_b64,
         }
     except Exception as e:
