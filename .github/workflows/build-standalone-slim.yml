@@ -8,6 +8,7 @@ on:
       - Dockerfile.standalone
       - .github/workflows/build-standalone-slim.yml
       - handler.py
+      - patch_basicsr.py
       - avatar/**
       - .dockerignore
       

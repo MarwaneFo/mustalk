@@ -16,3 +16,5 @@
 # La voix de reference XTTS doit rester dans le contexte de build.
 !xtts/
 !xtts/**
+
+!patch_basicsr.py
