@@ -15,6 +15,7 @@ Entrée attendue :
     "audio_url":    "https://...",    # ou "audio_base64"
     "audio_base64": "...",
     "fps":          30,          # defaut : cadence de la video source
+    "benchmark":    false,       # chronometre aussi le reseau seul
     "batch_size":   20,
     "restore_face": false,         # GFPGAN sur les images produites
     "restore_strength": 0.35,      # dosage ; 1.0 lisse trop, 0.3 garde la peau
@@ -424,40 +425,55 @@ def handler(job):
         force_restauration = float(job_input.get("restore_strength", 0.35))
         grain_peau = float(job_input.get("skin_grain", 0.0))
 
-        if not restaurer:
-            ri.args.skip_save_images = False
-            avatar.inference(audio_path, out_name, fps, False)
-        else:
-            # MuseTalk conditionne l'ecriture des images au PARAMETRE
-            # skip_save_images, mais l'encodage a la variable GLOBALE
-            # args.skip_save_images. En les dissociant, on obtient les images
-            # sans encodage ni suppression du dossier tmp -- exactement le
-            # point d'insertion voulu, sans toucher a leur code.
-            ri.args.skip_save_images = True
-            try:
-                avatar.inference(audio_path, out_name, fps, False)
-                tmp = os.path.join(avatar.avatar_path, "tmp")
-                _restaurer(tmp, force=force_restauration, grain=grain_peau)
+        etapes = {}
+        tmp = os.path.join(avatar.avatar_path, "tmp")
 
-                temp_mp4 = os.path.join(avatar.avatar_path, "temp.mp4")
-                subprocess.run(
-                    ["ffmpeg", "-y", "-v", "error", "-r", str(fps), "-f", "image2",
-                     "-i", os.path.join(tmp, "%08d.png"), "-vcodec", "libx264",
-                     "-vf", "format=yuv420p", "-crf", "18", temp_mp4],
-                    check=True)
-                os.makedirs(avatar.video_out_path, exist_ok=True)
-                subprocess.run(
-                    ["ffmpeg", "-y", "-v", "error", "-i", audio_path,
-                     "-i", temp_mp4, out_path],
-                    check=True)
-                for chemin in (temp_mp4,):
-                    if os.path.exists(chemin):
-                        os.remove(chemin)
-                shutil.rmtree(tmp, ignore_errors=True)
-            finally:
-                # Ne pas laisser la globale modifiee : le worker sert
-                # plusieurs requetes, la suivante attend le comportement normal.
-                ri.args.skip_save_images = False
+        # MuseTalk conditionne l'ecriture des images au PARAMETRE
+        # skip_save_images, mais l'encodage a la variable GLOBALE
+        # args.skip_save_images. En les dissociant on recupere les images
+        # sans encodage ni suppression du dossier tmp -- le point d'insertion
+        # voulu, sans toucher a leur code. On passe desormais toujours par la,
+        # restauration ou non : c'est le seul moyen de chronometrer separement
+        # le reseau, l'ecriture des images et l'encodage.
+        ri.args.skip_save_images = True
+        try:
+            # Mesure facultative : une passe identique mais sans ecrire les
+            # PNG. L'ecart avec la passe reelle donne le cout exact de cette
+            # ecriture, qu'on soupconne d'etre le vrai goulot.
+            if job_input.get("benchmark"):
+                t = time.time()
+                avatar.inference(audio_path, out_name, fps, True)
+                etapes["reseau_sans_ecriture"] = round(time.time() - t, 1)
+
+            t = time.time()
+            avatar.inference(audio_path, out_name, fps, False)
+            etapes["reseau_et_ecriture"] = round(time.time() - t, 1)
+
+            if restaurer:
+                t = time.time()
+                _restaurer(tmp, force=force_restauration, grain=grain_peau)
+                etapes["restauration"] = round(time.time() - t, 1)
+
+            t = time.time()
+            temp_mp4 = os.path.join(avatar.avatar_path, "temp.mp4")
+            subprocess.run(
+                ["ffmpeg", "-y", "-v", "error", "-r", str(fps), "-f", "image2",
+                 "-i", os.path.join(tmp, "%08d.png"), "-vcodec", "libx264",
+                 "-vf", "format=yuv420p", "-crf", "18", temp_mp4],
+                check=True)
+            os.makedirs(avatar.video_out_path, exist_ok=True)
+            subprocess.run(
+                ["ffmpeg", "-y", "-v", "error", "-i", audio_path,
+                 "-i", temp_mp4, out_path],
+                check=True)
+            etapes["encodage"] = round(time.time() - t, 1)
+            if os.path.exists(temp_mp4):
+                os.remove(temp_mp4)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+            # Ne pas laisser la globale modifiee : le worker sert plusieurs
+            # requetes, la suivante attend le comportement normal.
+            ri.args.skip_save_images = False
 
         if not os.path.exists(out_path):
             raise RuntimeError(f"Vidéo non produite : {out_path}")
@@ -471,6 +487,8 @@ def handler(job):
             "duration_s": round(time.time() - started, 2),
             "restore_face": restaurer,
             "restore_strength": force_restauration if restaurer else None,
+            "fps": fps,
+            "etapes": etapes,
             "skin_grain": grain_peau if restaurer else None,
             "video_base64": video_b64,
         }
