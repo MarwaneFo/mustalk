@@ -14,7 +14,7 @@ Entrée attendue :
     "avatar_id":    "Inna",           # avatar pré-calculé présent dans results/
     "audio_url":    "https://...",    # ou "audio_base64"
     "audio_base64": "...",
-    "fps":          25,
+    "fps":          30,          # defaut : cadence de la video source
     "batch_size":   20,
     "restore_face": false,         # GFPGAN sur les images produites
     "restore_strength": 0.35,      # dosage ; 1.0 lisse trop, 0.3 garde la peau
@@ -267,6 +267,50 @@ def _restaurer(dossier, force=0.35, grain=0.0):
     print(f"[restore] termine en {time.time()-t:.0f}s", flush=True)
 
 
+_FPS_SOURCE = {}
+
+
+def _video_source(avatar_id):
+    return os.environ.get("AVATAR_VIDEO",
+                          f"/opt/MuseTalk/data/video/{avatar_id}.mp4")
+
+
+def _fps_source(avatar_id):
+    """Cadence de la vidéo dont l'avatar a été extrait.
+
+    full_imgs contient les images telles que filmées : les rejouer à une
+    cadence différente rejoue le visage au ralenti (ou en accéléré) alors
+    que la voix, elle, garde son rythme. La bouche reste techniquement
+    synchrone image par image, mais la mâchoire et la tête traînent — et
+    on perçoit un avatar qui ne dit pas ce qu'on entend.
+    """
+    if avatar_id in _FPS_SOURCE:
+        return _FPS_SOURCE[avatar_id]
+    fps = None
+    video = _video_source(avatar_id)
+    if os.path.exists(video):
+        try:
+            out = subprocess.run(
+                ["ffprobe", "-v", "error", "-select_streams", "v:0",
+                 "-show_entries", "stream=r_frame_rate",
+                 "-of", "default=nw=1:nk=1", video],
+                capture_output=True, text=True, timeout=60, check=True,
+            ).stdout.strip()
+            num, _, den = out.partition("/")
+            fps = float(num) / float(den or 1)
+        except Exception as e:
+            print(f"[fps] ffprobe a echoue sur {video} : {e}", flush=True)
+    if fps and 5 <= fps <= 120:
+        fps = int(round(fps))
+        print(f"[fps] {avatar_id} : cadence source {fps} i/s", flush=True)
+    else:
+        fps = 25
+        print(f"[fps] {avatar_id} : cadence source inconnue, repli sur 25 i/s",
+              flush=True)
+    _FPS_SOURCE[avatar_id] = fps
+    return fps
+
+
 def _ensure_frames(avatar_id):
     """
     full_imgs pèse 3,2 Go : trop lourd pour une image Docker. On ne l'embarque
@@ -295,7 +339,7 @@ def _ensure_frames(avatar_id):
     if n_full >= n_mask > 0:
         return
 
-    video = os.environ.get("AVATAR_VIDEO", f"/opt/MuseTalk/data/video/{avatar_id}.mp4")
+    video = _video_source(avatar_id)
     if not os.path.exists(video):
         raise FileNotFoundError(
             f"Vidéo source absente : {video}. Elle est nécessaire pour "
@@ -363,7 +407,10 @@ def handler(job):
     workdir = tempfile.mkdtemp(prefix="musetalk_")
     try:
         avatar_id = job_input.get("avatar_id", DEFAULT_AVATAR)
-        fps = int(job_input.get("fps", 25))
+        # Par defaut on suit la cadence de la video source ; "fps" dans la
+        # requete reste possible, mais s'en ecarter ralentit ou accelere
+        # le visage par rapport a la voix.
+        fps = int(job_input.get("fps") or _fps_source(avatar_id))
         batch_size = int(job_input.get("batch_size", 20))
 
         audio_path = _fetch_audio(job_input, workdir)
