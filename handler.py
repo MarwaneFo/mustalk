@@ -501,9 +501,13 @@ def handler(job):
                  "-vf", "format=yuv420p", "-crf", "18", temp_mp4],
                 check=True)
             os.makedirs(avatar.video_out_path, exist_ok=True)
+            # -c:v copy : sans cela ffmpeg re-encode integralement la video
+            # pour y coller l'audio, soit 425 images encodees deux fois.
+            # C'est le comportement par defaut, et l'origine de la moitie
+            # des 20 s d'encodage mesurees.
             subprocess.run(
                 ["ffmpeg", "-y", "-v", "error", "-i", audio_path,
-                 "-i", temp_mp4, out_path],
+                 "-i", temp_mp4, "-c:v", "copy", "-c:a", "aac", out_path],
                 check=True)
             etapes["encodage"] = round(time.time() - t, 1)
             if os.path.exists(temp_mp4):
