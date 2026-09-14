@@ -14,7 +14,7 @@ Entrée attendue :
     "avatar_id":    "Inna",           # avatar pré-calculé présent dans results/
     "audio_url":    "https://...",    # ou "audio_base64"
     "audio_base64": "...",
-    "fps":          30,          # defaut : cadence de la video source
+    "fps":          25,          # cadence d'entrainement de MuseTalk
     "benchmark":    false,       # chronometre aussi le reseau seul
     "batch_size":   20,
     "restore_face": false,         # GFPGAN sur les images produites
@@ -268,6 +268,11 @@ def _restaurer(dossier, force=0.35, grain=0.0):
     print(f"[restore] termine en {time.time()-t:.0f}s", flush=True)
 
 
+# MuseTalk 1.5 a ete entraine a 25 i/s ; leur README l'indique explicitement
+# et le deconseille de s'en ecarter. C'est donc la cadence de sortie, et une
+# source filmee autrement doit etre ramenee a celle-la, pas l'inverse.
+FPS_MODELE = 25
+
 _FPS_SOURCE = {}
 
 
@@ -365,6 +370,39 @@ def _ensure_frames(avatar_id):
     print(f"[frames] {len(os.listdir(full))} frames prêtes en {time.time()-t:.0f}s", flush=True)
 
 
+def _recadencer(avatar, fps_source):
+    """Ramene un avatar filme a fps_source vers les 25 i/s du modele.
+
+    Les images d'Inna sont filmees a 30 i/s. Les rejouer a 25 etirait le
+    visage d'un facteur 1,2 : la bouche restait synchrone image par image,
+    mais la machoire et la tete trainaient, d'ou l'impression que l'avatar
+    ne dit pas ce qu'on entend. Rendre a 30 corrigeait la vitesse mais
+    sortait le modele de sa cadence d'entrainement.
+
+    La bonne reponse est de decimer la source. Or les cinq listes de l'avatar
+    -- images, coordonnees, masques, boites de masque, latents -- partagent
+    le meme index : les decimer avec la MEME selection les laisse alignees,
+    et evite entierement de re-preparer l'avatar sur GPU.
+
+    Effet secondaire bienvenu : un sixieme d'images en moins en memoire.
+    """
+    if abs(fps_source - FPS_MODELE) < 0.5:
+        return
+    listes = ("frame_list_cycle", "coord_list_cycle",
+              "mask_list_cycle", "mask_coords_list_cycle",
+              "input_latent_list_cycle")
+    n = min(len(getattr(avatar, nom)) for nom in listes)
+    m = int(round(n * FPS_MODELE / fps_source))
+    if m < 2:
+        return
+    choix = [min(n - 1, int(round(j * fps_source / FPS_MODELE))) for j in range(m)]
+    for nom in listes:
+        source = getattr(avatar, nom)
+        setattr(avatar, nom, [source[i] for i in choix])
+    print(f"[cadence] {fps_source:.0f} -> {FPS_MODELE} i/s : "
+          f"{n} images ramenees a {m}", flush=True)
+
+
 def _get_avatar(avatar_id, batch_size):
     """Les avatars pré-calculés sont réutilisés entre les requêtes."""
     if avatar_id not in _AVATARS:
@@ -384,6 +422,7 @@ def _get_avatar(avatar_id, batch_size):
             batch_size=batch_size,
             preparation=False,   # réutilise le pré-calcul, n'écrase rien
         )
+        _recadencer(_AVATARS[avatar_id], _fps_source(avatar_id))
     return _AVATARS[avatar_id]
 
 
@@ -408,10 +447,10 @@ def handler(job):
     workdir = tempfile.mkdtemp(prefix="musetalk_")
     try:
         avatar_id = job_input.get("avatar_id", DEFAULT_AVATAR)
-        # Par defaut on suit la cadence de la video source ; "fps" dans la
-        # requete reste possible, mais s'en ecarter ralentit ou accelere
-        # le visage par rapport a la voix.
-        fps = int(job_input.get("fps") or _fps_source(avatar_id))
+        # L'avatar est ramene a 25 i/s au chargement ; on rend donc a 25.
+        # "fps" reste accepte, mais s'en ecarter desynchronise le visage
+        # de la voix ET sort le modele de sa cadence d'entrainement.
+        fps = int(job_input.get("fps") or FPS_MODELE)
         batch_size = int(job_input.get("batch_size", 20))
 
         audio_path = _fetch_audio(job_input, workdir)
