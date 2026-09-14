@@ -49,12 +49,23 @@ COPY avatar/Inna.mp4 /opt/MuseTalk/data/video/Inna.mp4
 # basicsr importe torchvision.transforms.functional_tensor, supprime depuis
 # torchvision 0.17. On corrige l import plutot que de retrograder torchvision,
 # dont dependent MuseTalk et la pile OpenMMLab.
+# gfpgan tire basicsr, qui remonte numpy en version 2 -- or opencv, deja
+# present, est compile contre numpy 1.x. Sans restauration, tout import de
+# cv2 echoue sur "numpy.core.multiarray failed to import", y compris dans
+# MuseTalk. On reinstalle donc numpy et opencv aux versions de l image, et
+# on verifie que la pile complete cohabite avant de poursuivre.
 COPY patch_basicsr.py /tmp/patch_basicsr.py
 RUN pip install --no-cache-dir gfpgan==1.3.8 \
+ && pip install --no-cache-dir --force-reinstall --no-deps \
+      "numpy==1.23.5" "opencv-python==4.9.0.80" \
  && python /tmp/patch_basicsr.py \
  && rm -f /tmp/patch_basicsr.py \
- && python -c "from gfpgan import GFPGANer; import basicsr, facexlib; \
-print('gfpgan OK | basicsr', basicsr.__version__)"
+ && python -c "\
+import numpy, cv2; \
+from gfpgan import GFPGANer; \
+import basicsr, facexlib; \
+print('numpy', numpy.__version__, '| cv2', cv2.__version__, \
+      '| basicsr', basicsr.__version__, '| gfpgan OK')"
 
 # Poids GFPGAN (~350 Mo), telecharges au build comme le reste.
 RUN mkdir -p /opt/gfpgan \
