@@ -11,7 +11,8 @@ Requête :
 {
   "audio_base64": "...",        # ou "audio_url"
   "video_url":     "https://…", # facultatif ; sinon la vidéo embarquée
-  "inference_steps": 20,        # 20 à 50 ; plus = plus net et plus lent
+  "inference_steps": 20,        # 10 a 50 ; le temps y est proportionnel
+  "resolution":      512,       # 256 ou 512 ; 256 va 3 a 4 fois plus vite
   "guidance_scale":  1.5,
   "seed": 1247                  # -1 pour aléatoire
 }
@@ -171,7 +172,13 @@ def handler(job):
             raise FileNotFoundError(f"Vidéo source absente : {video}")
         etapes["entrees"] = round(time.time() - t, 1)
 
-        pas = int(job_input.get("inference_steps", 20))
+        # Les deux leviers qui font le compromis vitesse/qualite. Le temps de
+        # diffusion est proportionnel au nombre de pas, et croit avec le carre
+        # de la resolution : 256 px va environ quatre fois plus vite que 512.
+        pas = max(1, min(50, int(job_input.get("inference_steps", 20))))
+        resolution = int(job_input.get("resolution", _CONFIG.data.resolution))
+        if resolution not in (256, 512):
+            raise ValueError("resolution doit valoir 256 ou 512, pas %r" % resolution)
         guidage = float(job_input.get("guidance_scale", 1.5))
         graine = int(job_input.get("seed", 1247))
         if graine != -1:
@@ -192,8 +199,8 @@ def handler(job):
             guidance_scale=guidage,
             weight_dtype=torch.float16 if torch.cuda.is_available()
             and torch.cuda.get_device_capability()[0] > 7 else torch.float32,
-            width=_CONFIG.data.resolution,
-            height=_CONFIG.data.resolution,
+            width=resolution,
+            height=resolution,
             mask_image_path=_CONFIG.data.mask_image_path,
             temp_dir=temp_dir,
         )
@@ -211,7 +218,7 @@ def handler(job):
             "inference_steps": pas,
             "guidance_scale": guidage,
             "seed": graine,
-            "resolution": _CONFIG.data.resolution,
+            "resolution": resolution,
             "video_base64": video_b64,
         }
     except Exception as e:
