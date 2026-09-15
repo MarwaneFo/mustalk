@@ -25,6 +25,9 @@ d'un coût déplacé du démarrage vers chaque génération.
 """
 import base64
 import os
+
+print("[boot] handler demarre", flush=True)
+
 import shutil
 import subprocess
 import sys
@@ -57,11 +60,16 @@ _CONFIG = None
 
 
 def _charger():
-    """Chargement unique, au démarrage du worker.
+    """Chargement unique, au PREMIER JOB et non a l'import.
 
-    Reprend scripts/inference.py de LatentSync, mais en gardant le pipeline
-    vivant entre les requêtes : le recharger à chaque job coûterait plus cher
-    que la génération elle-même.
+    Reprend scripts/inference.py de LatentSync, en gardant le pipeline vivant
+    entre les requetes : le recharger a chaque job couterait plus cher que la
+    generation elle-meme.
+
+    Appele depuis le handler, deliberement. Charger avant
+    runpod.serverless.start() rendait toute erreur invisible : le processus
+    mourait sans que RunPod ait un job a marquer en echec, et le worker
+    s'annoncait pret alors qu'il ne pouvait rien accepter.
     """
     global _PIPELINE, _CONFIG
     t = time.time()
@@ -123,9 +131,6 @@ def _charger():
           f"(résolution {config.data.resolution})", flush=True)
 
 
-_charger()
-
-
 def _fetch(job_input, cle_b64, cle_url, dest):
     if job_input.get(cle_b64):
         with open(dest, "wb") as f:
@@ -146,6 +151,14 @@ def handler(job):
     workdir = tempfile.mkdtemp(prefix="latentsync_")
     try:
         etapes = {}
+
+        # Premier job du worker : c'est ici qu'on paye le chargement. Plus
+        # long pour lui, mais toute erreur remonte dans la reponse au lieu
+        # de tuer un processus muet.
+        if _PIPELINE is None:
+            t = time.time()
+            _charger()
+            etapes["chargement_modeles"] = round(time.time() - t, 1)
 
         t = time.time()
         audio = _fetch(job_input, "audio_base64", "audio_url",
