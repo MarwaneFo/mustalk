@@ -67,13 +67,18 @@ RUN sed -i '/^gradio/d;/^insightface/d' requirements.txt \
 # un "numpy.core.multiarray failed to import" qui ne designe pas le
 # coupable. On restaure donc les deux versions attendues, --no-deps pour
 # ne pas relancer la cascade.
+#
+# L'ordre compte : opencv-python et opencv-python-headless ecrivent dans
+# le meme dossier cv2. Retirer le second APRES avoir reinstalle le premier
+# emporte des fichiers partages et laisse un cv2 mutile, d'ou un
+# "module 'cv2' has no attribute 'CV_8U'" qui ne designe pas la cause.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential cmake \
  && pip install --no-cache-dir "cython<3" onnx \
  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3 \
+ && pip uninstall -y opencv-python-headless opencv-python || true \
  && pip install --no-cache-dir --force-reinstall --no-deps \
       "numpy==1.26.4" "opencv-python==4.9.0.80" \
- && pip uninstall -y opencv-python-headless || true \
  && apt-get purge -y build-essential cmake \
  && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/* \
