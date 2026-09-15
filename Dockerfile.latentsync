@@ -36,29 +36,45 @@ RUN git clone https://github.com/bytedance/LatentSync.git /opt/LatentSync \
 
 WORKDIR /opt/LatentSync
 
-# insightface 0.7.3 n'est publie qu'en archive source -- aucune roue, pour
-# aucune plateforme -- et compile une extension C++. Il faut donc un
-# compilateur, mais uniquement le temps de cette etape : on l'installe, on
-# compile, on le retire, le tout dans une seule couche. Garder
-# build-essential dans l'image finale couterait 1,5 Go pour rien.
+# Les dependances declarees d'abord : elles fixent numpy 1.26.4,
+# opencv 4.9 et onnxruntime-gpu 1.21, versions dont la suite depend.
 #
-# --no-build-isolation parce que son setup.py importe numpy et Cython des la
-# premiere ligne : dans un bac a sable vide, pip echoue avant meme de lire
-# les dependances declarees.
-RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential cmake \
- && pip install --no-cache-dir "numpy==1.26.4" "cython<3" onnx \
- && pip install --no-cache-dir --no-build-isolation insightface==0.7.3 \
- && python -c "import insightface; print('insightface', insightface.__version__, 'compile')" \
- && apt-get purge -y build-essential cmake \
- && apt-get autoremove -y \
- && rm -rf /var/lib/apt/lists/*
-
 # gradio n'a aucun sens dans un worker : c'est l'interface de demonstration,
 # et elle tire a elle seule une centaine de megaoctets de dependances.
 RUN sed -i '/^gradio/d' requirements.txt \
  && pip install --no-cache-dir -r requirements.txt \
  && pip install --no-cache-dir runpod requests
+
+# insightface 0.7.3 n'est publie qu'en archive source -- aucune roue, pour
+# aucune plateforme -- et compile une extension C++. Le compilateur n'est
+# installe que le temps de cette couche, puis retire : le garder couterait
+# 1,5 Go dans l'image finale.
+#
+# --no-build-isolation parce que son setup.py importe numpy et Cython des la
+# premiere ligne : dans un bac a sable vide, pip echoue avant meme de lire
+# les dependances declarees.
+#
+# Et surtout : insightface tire albumentations et scikit-image, qui
+# remontent numpy en 2.x et glissent une seconde version d'OpenCV. Les
+# extensions compilees contre numpy 1.x cessent alors de se charger, avec
+# un "numpy.core.multiarray failed to import" qui ne designe pas le
+# coupable. On restaure donc les deux versions attendues, --no-deps pour
+# ne pas relancer la cascade.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential cmake \
+ && pip install --no-cache-dir "cython<3" onnx \
+ && pip install --no-cache-dir --no-build-isolation insightface==0.7.3 \
+ && pip install --no-cache-dir --force-reinstall --no-deps \
+      "numpy==1.26.4" "opencv-python==4.9.0.80" \
+ && pip uninstall -y opencv-python-headless || true \
+ && apt-get purge -y build-essential cmake \
+ && apt-get autoremove -y \
+ && rm -rf /var/lib/apt/lists/* \
+ && python -c "\
+import numpy, cv2, onnxruntime, insightface, torch; \
+assert numpy.__version__.startswith('1.26'), 'numpy remonte en ' + numpy.__version__; \
+print('numpy', numpy.__version__, '| cv2', cv2.__version__, \
+      '| ort', onnxruntime.__version__, '| insightface', insightface.__version__)"
 
 # --- Poids ---------------------------------------------------------------
 # Tout est embarque : un worker Serverless ne doit rien telecharger au
