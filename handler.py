@@ -191,7 +191,7 @@ _AVATAR_ROOT = _resolve_avatars()
 _GFP = None
 
 
-def _restaurer(dossier, force=0.35, grain=0.0):
+def _restaurer(dossier, boites=None, force=0.35, grain=0.0):
     """
     Repasse sur les images produites par MuseTalk pour en adoucir le defaut
     le plus visible : la bouche, regeneree a basse resolution, ressort molle
@@ -209,6 +209,13 @@ def _restaurer(dossier, force=0.35, grain=0.0):
     grain -- bruit leger reintroduit apres coup. Une peau parfaitement lisse
         n'existe pas dans une vraie image : un grain discret (0.02 a 0.05)
         raccorde la zone traitee au reste du visage.
+
+    boites -- position du visage image par image, telle que MuseTalk l'a
+        deja calculee. GFPGAN commence par chercher un visage dans ce qu'on
+        lui donne ; lui donner 1920x1080 revient a refaire 867 fois une
+        detection dont on connait la reponse. On lui passe donc une vignette
+        centree sur le visage, et on la recolle ensuite. Sans cette liste on
+        retombe sur l'image entiere, correct mais lent.
 
     Le modele n'est charge qu'au premier appel : inutile de payer son
     chargement sur un worker ou l'option n'est jamais demandee.
@@ -231,10 +238,28 @@ def _restaurer(dossier, force=0.35, grain=0.0):
                         channel_multiplier=2, bg_upsampler=None)
         print(f"[restore] GFPGAN charge en {time.time()-t:.0f}s", flush=True)
 
-    print(f"[restore] force={force} grain={grain} sur {len(fichiers)} images",
-          flush=True)
+    print(f"[restore] force={force} grain={grain} sur {len(fichiers)} images"
+          f"{' (vignette visage)' if boites else ' (image entiere)'}", flush=True)
     t = time.time()
     rng = np.random.default_rng(0)   # graine fixe : pas de scintillement
+
+    def vignette(img, i):
+        """Cadre genereux autour du visage, ou None si on ne sait pas ou il est.
+
+        La marge doit rester large : GFPGAN aligne le visage sur ses points
+        caracteristiques, et un cadre trop serre lui coupe le menton ou le
+        front, ce qui degrade l'alignement.
+        """
+        if not boites:
+            return None
+        x1, y1, x2, y2 = boites[i % len(boites)]
+        h, l = img.shape[:2]
+        mx, my = int((x2 - x1) * 0.6), int((y2 - y1) * 0.6)
+        cx1, cy1 = max(0, int(x1) - mx), max(0, int(y1) - my)
+        cx2, cy2 = min(l, int(x2) + mx), min(h, int(y2) + my)
+        if cx2 - cx1 < 64 or cy2 - cy1 < 64:
+            return None
+        return cx1, cy1, cx2, cy2
 
     for i, nom in enumerate(fichiers):
         chemin = os.path.join(dossier, nom)
@@ -242,28 +267,38 @@ def _restaurer(dossier, force=0.35, grain=0.0):
         if img is None:
             continue
 
-        # paste_back recolle le visage restaure dans l'image complete ;
-        # sans lui on n'obtiendrait que la vignette du visage.
-        _, _, restauree = _GFP.enhance(img, has_aligned=False,
+        cadre = vignette(img, i)
+        if cadre:
+            cx1, cy1, cx2, cy2 = cadre
+            zone = img[cy1:cy2, cx1:cx2]
+        else:
+            zone = img
+
+        # paste_back recolle le visage restaure dans l'image fournie ;
+        # sans lui on n'obtiendrait que la vignette alignee du visage.
+        _, _, restauree = _GFP.enhance(zone, has_aligned=False,
                                        only_center_face=True, paste_back=True)
         if restauree is None:
             continue
 
         if force < 1.0:
-            sortie = cv2.addWeighted(restauree, force, img, 1.0 - force, 0.0)
+            melange = cv2.addWeighted(restauree, force, zone, 1.0 - force, 0.0)
         else:
-            sortie = restauree
+            melange = restauree
+
+        if cadre:
+            sortie = img
+            sortie[cy1:cy2, cx1:cx2] = melange
+        else:
+            sortie = melange
 
         if grain > 0:
-            # Bruit gaussien leger, identique d'une image a l'autre pour ne
-            # pas produire de fourmillement a la lecture.
+            # Bruit gaussien leger, tire a nouveau a chaque image : un grain
+            # fige ressemblerait a de la salete sur l'objectif.
             bruit = rng.normal(0.0, grain * 255.0, sortie.shape)
             sortie = np.clip(sortie.astype(np.float32) + bruit, 0, 255).astype(np.uint8)
 
         cv2.imwrite(chemin, sortie)
-
-        if (i + 1) % 100 == 0:
-            print(f"[restore] {i+1}/{len(fichiers)}", flush=True)
 
     print(f"[restore] termine en {time.time()-t:.0f}s", flush=True)
 
@@ -556,7 +591,8 @@ def handler(job):
 
             if restaurer:
                 t = time.time()
-                _restaurer(tmp, force=force_restauration, grain=grain_peau)
+                _restaurer(tmp, boites=avatar.coord_list_cycle,
+                           force=force_restauration, grain=grain_peau)
                 etapes["restauration"] = round(time.time() - t, 1)
 
             t = time.time()
