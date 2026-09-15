@@ -20,13 +20,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     LATENTSYNC_CKPT=checkpoints/latentsync_unet.pt \
     LATENTSYNC_VIDEO=/opt/LatentSync/data/Inna.mp4
 
-# build-essential et cmake ne sont pas du confort : insightface 0.7.3 n'est
-# publie qu'en archive source, sans aucune roue precompilee, et compile une
-# extension C++. Sans compilateur, pip echoue au milieu de l'installation des
-# dependances -- ce qui a fait echouer le premier build.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       python3.10 python3.10-dev python3-pip git curl ca-certificates \
-      build-essential cmake \
       ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
  && rm -rf /var/lib/apt/lists/* \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python \
@@ -41,13 +36,23 @@ RUN git clone https://github.com/bytedance/LatentSync.git /opt/LatentSync \
 
 WORKDIR /opt/LatentSync
 
-# insightface se compile a part, et avant le reste. Son setup.py importe
-# numpy et Cython des la premiere ligne : sans eux deja presents, pip echoue
-# avant meme de lire les dependances declarees. D'ou --no-build-isolation,
-# qui lui donne acces a l'environnement plutot qu'a un bac a sable vide.
-RUN pip install --no-cache-dir "numpy==1.26.4" "cython<3" onnx \
+# insightface 0.7.3 n'est publie qu'en archive source -- aucune roue, pour
+# aucune plateforme -- et compile une extension C++. Il faut donc un
+# compilateur, mais uniquement le temps de cette etape : on l'installe, on
+# compile, on le retire, le tout dans une seule couche. Garder
+# build-essential dans l'image finale couterait 1,5 Go pour rien.
+#
+# --no-build-isolation parce que son setup.py importe numpy et Cython des la
+# premiere ligne : dans un bac a sable vide, pip echoue avant meme de lire
+# les dependances declarees.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends build-essential cmake \
+ && pip install --no-cache-dir "numpy==1.26.4" "cython<3" onnx \
  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3 \
- && python -c "import insightface; print('insightface', insightface.__version__, 'compile')"
+ && python -c "import insightface; print('insightface', insightface.__version__, 'compile')" \
+ && apt-get purge -y build-essential cmake \
+ && apt-get autoremove -y \
+ && rm -rf /var/lib/apt/lists/*
 
 # gradio n'a aucun sens dans un worker : c'est l'interface de demonstration,
 # et elle tire a elle seule une centaine de megaoctets de dependances.
