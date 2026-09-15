@@ -21,7 +21,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write      # pour publier le journal en cas d'echec
       packages: write
 
     steps:
@@ -63,16 +63,38 @@ jobs:
           echo "out=${REGISTRY}/${owner}/${IMAGE}" >> "$GITHUB_OUTPUT"
           echo "ts=$(date -u +%Y%m%d-%H%M)" >> "$GITHUB_OUTPUT"
 
+      # Construction appelee directement plutot que via l'action : c'est le
+      # seul moyen de capturer la sortie et de la republier si ca casse.
       - name: Build & push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.latentsync
-          push: true
-          tags: |
-            ${{ steps.img.outputs.out }}:latest
-            ${{ steps.img.outputs.out }}:${{ steps.img.outputs.ts }}
-          provenance: false
+        run: |
+          set -o pipefail
+          docker buildx build \
+            --file Dockerfile.latentsync \
+            --tag ${{ steps.img.outputs.out }}:latest \
+            --tag ${{ steps.img.outputs.out }}:${{ steps.img.outputs.ts }} \
+            --provenance=false --push --progress plain . 2>&1 | tee /tmp/build.log
+
+      # L'API GitHub refuse les journaux d'Actions sans jeton. On publie donc
+      # la fin du journal dans une branche dediee, que le depot etant public
+      # une simple URL brute suffit a lire. Branche orpheline et forcee : elle
+      # ne contient qu'un fichier, sans historique, et ne touche pas a main.
+      - name: Publier le journal en cas d'echec
+        if: failure()
+        run: |
+          mkdir -p /tmp/journal
+          tail -c 60000 /tmp/build.log > /tmp/journal/latentsync.log || \
+            echo "aucune sortie capturee" > /tmp/journal/latentsync.log
+          cd /tmp/journal
+          git init -q
+          git checkout -q -b build-logs
+          git config user.email "actions@users.noreply.github.com"
+          git config user.name "GitHub Actions"
+          git add latentsync.log
+          git commit -q -m "journal du build ${{ github.sha }}"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            build-logs
+          echo "journal publie sur la branche build-logs"
 
       - name: Recapitulatif
         run: |
