@@ -1,0 +1,626 @@
+sdangerous-2.2.0-py3-none-any.whl (16 kB)
+#10 143.4 Requirement already satisfied: jinja2>=3.1.5 in /usr/local/lib/python3.10/dist-packages (from fastapi[all]>=0.141.1->runpod) (3.1.6)
+#10 143.5 Collecting pydantic-settings>=2.0.0
+#10 143.5   Downloading pydantic_settings-2.15.0-py3-none-any.whl (69 kB)
+#10 143.5      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 69.4/69.4 KB 272.8 MB/s eta 0:00:00
+#10 143.5 Collecting fastapi-cli[standard]>=0.0.32
+#10 143.5   Downloading fastapi_cli-0.0.32-py3-none-any.whl (14 kB)
+#10 143.6 Collecting pynacl>=1.5
+#10 143.6   Downloading pynacl-1.6.2-cp38-abi3-manylinux_2_34_x86_64.whl (1.4 MB)
+#10 143.6      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 242.5 MB/s eta 0:00:00
+#10 143.6 Collecting invoke>=2.0
+#10 143.6   Downloading invoke-3.0.3-py3-none-any.whl (160 kB)
+#10 143.6      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 161.0/161.0 KB 286.4 MB/s eta 0:00:00
+#10 143.8 Collecting bcrypt>=3.2
+#10 143.8   Downloading bcrypt-5.0.0-cp39-abi3-manylinux_2_34_x86_64.whl (278 kB)
+#10 143.8      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 278.2/278.2 KB 311.4 MB/s eta 0:00:00
+#10 143.8 Collecting wcwidth>=0.3.5
+#10 143.8   Downloading wcwidth-0.8.3-py3-none-any.whl (331 kB)
+#10 143.8      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 331.7/331.7 KB 342.8 MB/s eta 0:00:00
+#10 143.9 Requirement already satisfied: tqdm>4.64 in /usr/local/lib/python3.10/dist-packages (from tqdm-loggable>=0.4.1->runpod) (4.70.1)
+#10 144.1 Collecting pycares<6,>=5.0.0
+#10 144.2   Downloading pycares-5.0.1-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (222 kB)
+#10 144.2      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 222.9/222.9 KB 299.8 MB/s eta 0:00:00
+#10 144.2 Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.10/dist-packages (from botocore<1.44.0,>=1.43.94->boto3>=1.43.66->runpod) (2.9.0.post0)
+#10 144.2 Requirement already satisfied: pycparser in /usr/local/lib/python3.10/dist-packages (from cffi>=2.0.0->cryptography>=50.0.0->runpod) (3.0)
+#10 144.2 Collecting dnspython>=2.0.0
+#10 144.2   Downloading dnspython-2.8.0-py3-none-any.whl (331 kB)
+#10 144.2      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 331.1/331.1 KB 331.9 MB/s eta 0:00:00
+#10 144.3 Collecting rich-toolkit>=0.14.8
+#10 144.3   Downloading rich_toolkit-0.20.5-py3-none-any.whl (39 kB)
+#10 144.4 Collecting typer>=0.16.0
+#10 144.4   Downloading typer-0.27.2-py3-none-any.whl (123 kB)
+#10 144.4      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 123.1/123.1 KB 279.7 MB/s eta 0:00:00
+#10 144.4 Collecting fastapi-cloud-cli>=0.1.1
+#10 144.4   Downloading fastapi_cloud_cli-0.26.0-py3-none-any.whl (108 kB)
+#10 144.4      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 108.7/108.7 KB 283.4 MB/s eta 0:00:00
+#10 144.5 Collecting httpcore==1.*
+#10 144.5   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#10 144.5      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 78.8/78.8 KB 241.3 MB/s eta 0:00:00
+#10 144.5 Collecting anyio
+#10 144.6   Downloading anyio-4.15.1-py3-none-any.whl (132 kB)
+#10 144.6      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 132.1/132.1 KB 312.2 MB/s eta 0:00:00
+#10 144.6 Collecting h11>=0.16
+#10 144.6   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#10 144.6 Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.10/dist-packages (from jinja2>=3.1.5->fastapi[all]>=0.141.1->runpod) (3.0.3)
+#10 144.7 Collecting annotated-types>=0.6.0
+#10 144.7   Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#10 146.6 Collecting pydantic-core==2.46.5
+#10 146.6   Downloading pydantic_core-2.46.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+#10 146.6      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 262.9 MB/s eta 0:00:00
+#10 146.7 Collecting python-dotenv>=0.21.0
+#10 146.7   Downloading python_dotenv-1.2.3-py3-none-any.whl (22 kB)
+#10 147.2 Collecting websockets>=13.0
+#10 147.3   Downloading websockets-16.1.1-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (186 kB)
+#10 147.3      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 186.0/186.0 KB 154.6 MB/s eta 0:00:00
+#10 147.3 Collecting httptools>=0.8.0
+#10 147.3   Downloading httptools-0.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (450 kB)
+#10 147.4      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 450.0/450.0 KB 292.1 MB/s eta 0:00:00
+#10 147.6 Collecting watchfiles>=0.20
+#10 147.6   Downloading watchfiles-1.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (457 kB)
+#10 147.6      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 457.1/457.1 KB 302.2 MB/s eta 0:00:00
+#10 147.7 Collecting uvloop>=0.15.1
+#10 147.7   Downloading uvloop-0.22.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.7 MB)
+#10 147.7      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.7/3.7 MB 150.2 MB/s eta 0:00:00
+#10 147.8 Collecting exceptiongroup>=1.0.2
+#10 147.8   Downloading exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+#10 148.3 Collecting rignore>=0.5.1
+#10 148.3   Downloading rignore-0.8.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (933 kB)
+#10 148.3      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 933.9/933.9 KB 301.3 MB/s eta 0:00:00
+#10 148.4 Collecting sentry-sdk>=2.20.0
+#10 148.4   Downloading sentry_sdk-2.69.1-py3-none-any.whl (528 kB)
+#10 148.4      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 528.6/528.6 KB 329.2 MB/s eta 0:00:00
+#10 148.5 Collecting detect-installer>=0.1.0
+#10 148.5   Downloading detect_installer-0.2.1-py3-none-any.whl (5.4 kB)
+#10 148.5 Collecting agent-detector>=1.1.0
+#10 148.5   Downloading agent_detector-2.0.0-py3-none-any.whl (9.4 kB)
+#10 148.8 Collecting fastar>=0.10.0
+#10 148.8   Downloading fastar-0.12.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (811 kB)
+#10 148.8      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 811.5/811.5 KB 307.2 MB/s eta 0:00:00
+#10 148.8 Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.10/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore<1.44.0,>=1.43.94->boto3>=1.43.66->runpod) (1.17.0)
+#10 148.9 Collecting rich>=13.7.1
+#10 149.0   Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+#10 149.0      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 310.7/310.7 KB 325.6 MB/s eta 0:00:00
+#10 149.0 Collecting shellingham>=1.3.0
+#10 149.0   Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+#10 149.2 Collecting pygments<3.0.0,>=2.13.0
+#10 149.2   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+#10 149.2      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 301.2 MB/s eta 0:00:00
+#10 149.2 Collecting markdown-it-py>=2.2.0
+#10 149.2   Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+#10 149.2      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 91.7/91.7 KB 293.8 MB/s eta 0:00:00
+#10 149.4 Collecting mdurl~=0.1
+#10 149.4   Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+#10 150.7 Installing collected packages: py-cpuinfo, Brotli, websockets, wcwidth, watchdog, uvloop, typing-inspection, tqdm-loggable, tomlkit, tomli, shellingham, sentry-sdk, rignore, python-multipart, python-dotenv, pygments, pydantic-core, propcache, pfzy, multidict, mdurl, jmespath, itsdangerous, invoke, httptools, h11, frozenlist, fastar, exceptiongroup, dnspython, detect-installer, colorama, bcrypt, backports.zstd, backoff, async-timeout, annotated-types, annotated-doc, aiohappyeyeballs, agent-detector, yarl, uvicorn, pynacl, pydantic, pycares, prompt-toolkit, prettytable, markdown-it-py, httpcore, email-validator, cryptography, botocore, anyio, aiosignal, watchfiles, starlette, s3transfer, rich, pydantic-settings, pydantic-extra-types, paramiko, inquirerpy, httpx, aiohttp, aiodns, typer, rich-toolkit, fastapi, boto3, aiohttp-retry, fastapi-cloud-cli, fastapi-cli, runpod
+#10 155.7 Successfully installed Brotli-1.2.0 agent-detector-2.0.0 aiodns-4.0.4 aiohappyeyeballs-2.7.1 aiohttp-3.14.3 aiohttp-retry-2.9.1 aiosignal-1.4.0 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.15.1 async-timeout-5.0.1 backoff-2.2.1 backports.zstd-1.7.0 bcrypt-5.0.0 boto3-1.43.94 botocore-1.43.94 colorama-0.4.6 cryptography-50.0.1 detect-installer-0.2.1 dnspython-2.8.0 email-validator-2.3.0 exceptiongroup-1.3.1 fastapi-0.141.1 fastapi-cli-0.0.32 fastapi-cloud-cli-0.26.0 fastar-0.12.0 frozenlist-1.8.0 h11-0.16.0 httpcore-1.0.9 httptools-0.8.0 httpx-0.28.1 inquirerpy-0.3.4 invoke-3.0.3 itsdangerous-2.2.0 jmespath-1.1.0 markdown-it-py-4.2.0 mdurl-0.1.2 multidict-6.8.0 paramiko-5.0.0 pfzy-0.3.4 prettytable-3.18.0 prompt-toolkit-3.0.53 propcache-0.5.2 py-cpuinfo-9.0.0 pycares-5.0.1 pydantic-2.13.5 pydantic-core-2.46.5 pydantic-extra-types-2.11.1 pydantic-settings-2.15.0 pygments-2.21.0 pynacl-1.6.2 python-dotenv-1.2.3 python-multipart-0.0.32 rich-15.0.0 rich-toolkit-0.20.5 rignore-0.8.1 runpod-1.12.0 s3transfer-0.19.2 sentry-sdk-2.69.1 shellingham-1.5.4 starlette-1.6.0 tomli-2.4.1 tomlkit-0.15.1 tqdm-loggable-0.4.1 typer-0.27.2 typing-inspection-0.4.4 uvicorn-0.53.0 uvloop-0.22.1 watchdog-6.0.0 watchfiles-1.2.0 wcwidth-0.8.3 websockets-16.1.1 yarl-1.24.5
+#10 155.7 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#10 DONE 158.0s
+
+#11 [ 6/12] RUN apt-get update  && apt-get install -y --no-install-recommends build-essential cmake  && pip install --no-cache-dir "cython<3" onnx  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3  && pip install --no-cache-dir --force-reinstall --no-deps       "numpy==1.26.4" "opencv-python==4.9.0.80"  && pip uninstall -y opencv-python-headless || true  && apt-get purge -y build-essential cmake  && apt-get autoremove -y  && rm -rf /var/lib/apt/lists/*  && python -c "import numpy, cv2, onnxruntime, insightface, torch; assert numpy.__version__.startswith('1.26'), 'numpy remonte en ' + numpy.__version__; print('numpy', numpy.__version__, '| cv2', cv2.__version__,       '| ort', onnxruntime.__version__, '| insightface', insightface.__version__)"
+#11 0.605 Get:1 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+#11 0.605 Get:2 http://archive.ubuntu.com/ubuntu jammy InRelease [270 kB]
+#11 0.626 Get:3 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  InRelease [1578 B]
+#11 0.702 Get:4 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64  Packages [3009 kB]
+#11 0.708 Get:5 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+#11 0.732 Get:6 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+#11 0.807 Get:7 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [84.6 kB]
+#11 0.833 Get:8 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1317 kB]
+#11 0.915 Get:9 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages [1792 kB]
+#11 0.922 Get:10 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [7717 kB]
+#11 1.006 Get:11 http://archive.ubuntu.com/ubuntu jammy/multiverse amd64 Packages [266 kB]
+#11 1.009 Get:12 http://archive.ubuntu.com/ubuntu jammy/restricted amd64 Packages [164 kB]
+#11 1.011 Get:13 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages [17.5 MB]
+#11 1.019 Get:14 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [4290 kB]
+#11 1.142 Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [8007 kB]
+#11 1.188 Get:16 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [93.2 kB]
+#11 1.190 Get:17 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [4624 kB]
+#11 1.213 Get:18 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1620 kB]
+#11 1.221 Get:19 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [35.6 kB]
+#11 1.221 Get:20 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [82.8 kB]
+#11 3.000 Fetched 51.2 MB in 2s (21.1 MB/s)
+#11 3.000 Reading package lists...
+#11 4.281 Reading package lists...
+#11 5.501 Building dependency tree...
+#11 5.787 Reading state information...
+#11 5.974 The following additional packages will be installed:
+#11 5.974   binutils binutils-common binutils-x86-64-linux-gnu bzip2 cmake-data cpp
+#11 5.974   cpp-11 dh-elpa-helper dpkg-dev emacsen-common g++ g++-11 gcc gcc-11
+#11 5.974   gcc-11-base libarchive13 libasan6 libatomic1 libbinutils libbz2-1.0 libcc1-0
+#11 5.974   libctf-nobfd0 libctf0 libdpkg-perl libgcc-11-dev libisl23 libitm1
+#11 5.975   libjsoncpp25 liblsan0 libmpc3 libmpfr6 librhash0 libstdc++-11-dev libtsan0
+#11 5.975   libubsan1 libuv1 lto-disabled-list make patch xz-utils
+#11 5.976 Suggested packages:
+#11 5.976   binutils-doc bzip2-doc cmake-doc ninja-build cmake-format cpp-doc
+#11 5.976   gcc-11-locales debian-keyring g++-multilib g++-11-multilib gcc-11-doc
+#11 5.976   gcc-multilib manpages-dev autoconf automake libtool flex bison gdb gcc-doc
+#11 5.976   gcc-11-multilib lrzip bzr libstdc++-11-doc make-doc ed diffutils-doc
+#11 5.976 Recommended packages:
+#11 5.976   fakeroot libalgorithm-merge-perl libfile-fcntllock-perl
+#11 5.976   liblocale-gettext-perl
+#11 6.059 The following NEW packages will be installed:
+#11 6.059   binutils binutils-common binutils-x86-64-linux-gnu build-essential bzip2
+#11 6.059   cmake cmake-data cpp cpp-11 dh-elpa-helper dpkg-dev emacsen-common g++
+#11 6.060   g++-11 gcc gcc-11 gcc-11-base libarchive13 libasan6 libatomic1 libbinutils
+#11 6.060   libcc1-0 libctf-nobfd0 libctf0 libdpkg-perl libgcc-11-dev libisl23 libitm1
+#11 6.060   libjsoncpp25 liblsan0 libmpc3 libmpfr6 librhash0 libstdc++-11-dev libtsan0
+#11 6.060   libubsan1 libuv1 lto-disabled-list make patch xz-utils
+#11 6.061 The following packages will be upgraded:
+#11 6.062   libbz2-1.0
+#11 6.399 1 upgraded, 41 newly installed, 0 to remove and 66 not upgraded.
+#11 6.399 Need to get 68.0 MB of archives.
+#11 6.399 After this operation, 225 MB of additional disk space will be used.
+#11 6.399 Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libbz2-1.0 amd64 1.0.8-5ubuntu0.1 [34.5 kB]
+#11 6.685 Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libuv1 amd64 1.43.0-1ubuntu0.1 [92.7 kB]
+#11 6.903 Get:3 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 xz-utils amd64 5.2.5-2ubuntu1.1 [84.8 kB]
+#11 6.990 Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 binutils-common amd64 2.38-4ubuntu2.12 [223 kB]
+#11 7.191 Get:5 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libbinutils amd64 2.38-4ubuntu2.12 [663 kB]
+#11 7.448 Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libctf-nobfd0 amd64 2.38-4ubuntu2.12 [108 kB]
+#11 7.492 Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libctf0 amd64 2.38-4ubuntu2.12 [103 kB]
+#11 7.528 Get:8 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 binutils-x86-64-linux-gnu amd64 2.38-4ubuntu2.12 [2324 kB]
+#11 7.869 Get:9 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 binutils amd64 2.38-4ubuntu2.12 [3184 B]
+#11 7.869 Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gcc-11-base amd64 11.4.0-1ubuntu1~22.04.3 [216 kB]
+#11 7.878 Get:11 http://archive.ubuntu.com/ubuntu jammy/main amd64 libisl23 amd64 0.24-2build1 [727 kB]
+#11 7.911 Get:12 http://archive.ubuntu.com/ubuntu jammy/main amd64 libmpfr6 amd64 4.1.0-3build3 [1425 kB]
+#11 8.011 Get:13 http://archive.ubuntu.com/ubuntu jammy/main amd64 libmpc3 amd64 1.2.1-2build1 [46.9 kB]
+#11 8.011 Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 cpp-11 amd64 11.4.0-1ubuntu1~22.04.3 [10.0 MB]
+#11 8.350 Get:15 http://archive.ubuntu.com/ubuntu jammy/main amd64 cpp amd64 4:11.2.0-1ubuntu1 [27.7 kB]
+#11 8.351 Get:16 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcc1-0 amd64 12.3.0-1ubuntu1~22.04.3 [48.3 kB]
+#11 8.351 Get:17 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libitm1 amd64 12.3.0-1ubuntu1~22.04.3 [30.2 kB]
+#11 8.352 Get:18 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libatomic1 amd64 12.3.0-1ubuntu1~22.04.3 [10.5 kB]
+#11 8.353 Get:19 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libasan6 amd64 11.4.0-1ubuntu1~22.04.3 [2283 kB]
+#11 8.375 Get:20 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 liblsan0 amd64 12.3.0-1ubuntu1~22.04.3 [1069 kB]
+#11 8.385 Get:21 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libtsan0 amd64 11.4.0-1ubuntu1~22.04.3 [2260 kB]
+#11 8.454 Get:22 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libubsan1 amd64 12.3.0-1ubuntu1~22.04.3 [976 kB]
+#11 8.462 Get:23 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libgcc-11-dev amd64 11.4.0-1ubuntu1~22.04.3 [2517 kB]
+#11 8.483 Get:24 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gcc-11 amd64 11.4.0-1ubuntu1~22.04.3 [20.1 MB]
+#11 8.702 Get:25 http://archive.ubuntu.com/ubuntu jammy/main amd64 gcc amd64 4:11.2.0-1ubuntu1 [5112 B]
+#11 8.703 Get:26 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libstdc++-11-dev amd64 11.4.0-1ubuntu1~22.04.3 [2101 kB]
+#11 8.718 Get:27 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 g++-11 amd64 11.4.0-1ubuntu1~22.04.3 [11.4 MB]
+#11 8.801 Get:28 http://archive.ubuntu.com/ubuntu jammy/main amd64 g++ amd64 4:11.2.0-1ubuntu1 [1412 B]
+#11 8.802 Get:29 http://archive.ubuntu.com/ubuntu jammy/main amd64 make amd64 4.3-4.1build1 [180 kB]
+#11 8.803 Get:30 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libdpkg-perl all 1.21.1ubuntu2.6 [237 kB]
+#11 8.806 Get:31 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 bzip2 amd64 1.0.8-5ubuntu0.1 [34.8 kB]
+#11 8.806 Get:32 http://archive.ubuntu.com/ubuntu jammy/main amd64 patch amd64 2.7.6-7build2 [109 kB]
+#11 8.807 Get:33 http://archive.ubuntu.com/ubuntu jammy/main amd64 lto-disabled-list all 24 [12.5 kB]
+#11 8.821 Get:34 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 dpkg-dev all 1.21.1ubuntu2.6 [922 kB]
+#11 8.828 Get:35 http://archive.ubuntu.com/ubuntu jammy/main amd64 build-essential amd64 12.9ubuntu3 [4744 B]
+#11 8.937 Get:36 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libarchive13 amd64 3.6.0-1ubuntu1.8 [368 kB]
+#11 8.941 Get:37 http://archive.ubuntu.com/ubuntu jammy/main amd64 libjsoncpp25 amd64 1.9.5-3 [80.0 kB]
+#11 8.942 Get:38 http://archive.ubuntu.com/ubuntu jammy/main amd64 librhash0 amd64 1.4.2-1ubuntu1 [125 kB]
+#11 8.943 Get:39 http://archive.ubuntu.com/ubuntu jammy/main amd64 dh-elpa-helper all 2.0.9ubuntu1 [7610 B]
+#11 8.943 Get:40 http://archive.ubuntu.com/ubuntu jammy/main amd64 emacsen-common all 3.0.4 [14.9 kB]
+#11 8.945 Get:41 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 cmake-data all 3.22.1-1ubuntu1.22.04.2 [1913 kB]
+#11 8.958 Get:42 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 cmake amd64 3.22.1-1ubuntu1.22.04.2 [5010 kB]
+#11 9.139 debconf: delaying package configuration, since apt-utils is not installed
+#11 9.171 Fetched 68.0 MB in 3s (23.3 MB/s)
+#11 9.188 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 14284 files and directories currently installed.)
+#11 9.238 Preparing to unpack .../libbz2-1.0_1.0.8-5ubuntu0.1_amd64.deb ...
+#11 9.241 Unpacking libbz2-1.0:amd64 (1.0.8-5ubuntu0.1) over (1.0.8-5build1) ...
+#11 9.268 Setting up libbz2-1.0:amd64 (1.0.8-5ubuntu0.1) ...
+#11 9.290 Selecting previously unselected package libuv1:amd64.
+#11 9.290 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 14284 files and directories currently installed.)
+#11 9.305 Preparing to unpack .../00-libuv1_1.43.0-1ubuntu0.1_amd64.deb ...
+#11 9.306 Unpacking libuv1:amd64 (1.43.0-1ubuntu0.1) ...
+#11 9.323 Selecting previously unselected package xz-utils.
+#11 9.325 Preparing to unpack .../01-xz-utils_5.2.5-2ubuntu1.1_amd64.deb ...
+#11 9.326 Unpacking xz-utils (5.2.5-2ubuntu1.1) ...
+#11 9.344 Selecting previously unselected package binutils-common:amd64.
+#11 9.346 Preparing to unpack .../02-binutils-common_2.38-4ubuntu2.12_amd64.deb ...
+#11 9.347 Unpacking binutils-common:amd64 (2.38-4ubuntu2.12) ...
+#11 9.366 Selecting previously unselected package libbinutils:amd64.
+#11 9.368 Preparing to unpack .../03-libbinutils_2.38-4ubuntu2.12_amd64.deb ...
+#11 9.369 Unpacking libbinutils:amd64 (2.38-4ubuntu2.12) ...
+#11 9.396 Selecting previously unselected package libctf-nobfd0:amd64.
+#11 9.398 Preparing to unpack .../04-libctf-nobfd0_2.38-4ubuntu2.12_amd64.deb ...
+#11 9.399 Unpacking libctf-nobfd0:amd64 (2.38-4ubuntu2.12) ...
+#11 9.415 Selecting previously unselected package libctf0:amd64.
+#11 9.417 Preparing to unpack .../05-libctf0_2.38-4ubuntu2.12_amd64.deb ...
+#11 9.418 Unpacking libctf0:amd64 (2.38-4ubuntu2.12) ...
+#11 9.433 Selecting previously unselected package binutils-x86-64-linux-gnu.
+#11 9.435 Preparing to unpack .../06-binutils-x86-64-linux-gnu_2.38-4ubuntu2.12_amd64.deb ...
+#11 9.436 Unpacking binutils-x86-64-linux-gnu (2.38-4ubuntu2.12) ...
+#11 9.516 Selecting previously unselected package binutils.
+#11 9.518 Preparing to unpack .../07-binutils_2.38-4ubuntu2.12_amd64.deb ...
+#11 9.519 Unpacking binutils (2.38-4ubuntu2.12) ...
+#11 9.538 Selecting previously unselected package gcc-11-base:amd64.
+#11 9.540 Preparing to unpack .../08-gcc-11-base_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.541 Unpacking gcc-11-base:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 9.558 Selecting previously unselected package libisl23:amd64.
+#11 9.560 Preparing to unpack .../09-libisl23_0.24-2build1_amd64.deb ...
+#11 9.561 Unpacking libisl23:amd64 (0.24-2build1) ...
+#11 9.588 Selecting previously unselected package libmpfr6:amd64.
+#11 9.590 Preparing to unpack .../10-libmpfr6_4.1.0-3build3_amd64.deb ...
+#11 9.591 Unpacking libmpfr6:amd64 (4.1.0-3build3) ...
+#11 9.617 Selecting previously unselected package libmpc3:amd64.
+#11 9.619 Preparing to unpack .../11-libmpc3_1.2.1-2build1_amd64.deb ...
+#11 9.620 Unpacking libmpc3:amd64 (1.2.1-2build1) ...
+#11 9.636 Selecting previously unselected package cpp-11.
+#11 9.638 Preparing to unpack .../12-cpp-11_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.639 Unpacking cpp-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 9.787 Selecting previously unselected package cpp.
+#11 9.789 Preparing to unpack .../13-cpp_4%3a11.2.0-1ubuntu1_amd64.deb ...
+#11 9.790 Unpacking cpp (4:11.2.0-1ubuntu1) ...
+#11 9.808 Selecting previously unselected package libcc1-0:amd64.
+#11 9.810 Preparing to unpack .../14-libcc1-0_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.811 Unpacking libcc1-0:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 9.827 Selecting previously unselected package libitm1:amd64.
+#11 9.829 Preparing to unpack .../15-libitm1_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.830 Unpacking libitm1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 9.846 Selecting previously unselected package libatomic1:amd64.
+#11 9.849 Preparing to unpack .../16-libatomic1_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.850 Unpacking libatomic1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 9.865 Selecting previously unselected package libasan6:amd64.
+#11 9.868 Preparing to unpack .../17-libasan6_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.869 Unpacking libasan6:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 9.914 Selecting previously unselected package liblsan0:amd64.
+#11 9.916 Preparing to unpack .../18-liblsan0_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.917 Unpacking liblsan0:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 9.945 Selecting previously unselected package libtsan0:amd64.
+#11 9.947 Preparing to unpack .../19-libtsan0_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.949 Unpacking libtsan0:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 9.992 Selecting previously unselected package libubsan1:amd64.
+#11 9.994 Preparing to unpack .../20-libubsan1_12.3.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 9.995 Unpacking libubsan1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 10.02 Selecting previously unselected package libgcc-11-dev:amd64.
+#11 10.02 Preparing to unpack .../21-libgcc-11-dev_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 10.03 Unpacking libgcc-11-dev:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 10.11 Selecting previously unselected package gcc-11.
+#11 10.11 Preparing to unpack .../22-gcc-11_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 10.11 Unpacking gcc-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 10.34 Selecting previously unselected package gcc.
+#11 10.34 Preparing to unpack .../23-gcc_4%3a11.2.0-1ubuntu1_amd64.deb ...
+#11 10.34 Unpacking gcc (4:11.2.0-1ubuntu1) ...
+#11 10.36 Selecting previously unselected package libstdc++-11-dev:amd64.
+#11 10.36 Preparing to unpack .../24-libstdc++-11-dev_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 10.37 Unpacking libstdc++-11-dev:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 10.57 Selecting previously unselected package g++-11.
+#11 10.57 Preparing to unpack .../25-g++-11_11.4.0-1ubuntu1~22.04.3_amd64.deb ...
+#11 10.57 Unpacking g++-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 10.71 Selecting previously unselected package g++.
+#11 10.71 Preparing to unpack .../26-g++_4%3a11.2.0-1ubuntu1_amd64.deb ...
+#11 10.71 Unpacking g++ (4:11.2.0-1ubuntu1) ...
+#11 10.73 Selecting previously unselected package make.
+#11 10.73 Preparing to unpack .../27-make_4.3-4.1build1_amd64.deb ...
+#11 10.73 Unpacking make (4.3-4.1build1) ...
+#11 10.75 Selecting previously unselected package libdpkg-perl.
+#11 10.75 Preparing to unpack .../28-libdpkg-perl_1.21.1ubuntu2.6_all.deb ...
+#11 10.75 Unpacking libdpkg-perl (1.21.1ubuntu2.6) ...
+#11 10.79 Selecting previously unselected package bzip2.
+#11 10.79 Preparing to unpack .../29-bzip2_1.0.8-5ubuntu0.1_amd64.deb ...
+#11 10.79 Unpacking bzip2 (1.0.8-5ubuntu0.1) ...
+#11 10.81 Selecting previously unselected package patch.
+#11 10.81 Preparing to unpack .../30-patch_2.7.6-7build2_amd64.deb ...
+#11 10.82 Unpacking patch (2.7.6-7build2) ...
+#11 10.83 Selecting previously unselected package lto-disabled-list.
+#11 10.83 Preparing to unpack .../31-lto-disabled-list_24_all.deb ...
+#11 10.84 Unpacking lto-disabled-list (24) ...
+#11 10.85 Selecting previously unselected package dpkg-dev.
+#11 10.85 Preparing to unpack .../32-dpkg-dev_1.21.1ubuntu2.6_all.deb ...
+#11 10.85 Unpacking dpkg-dev (1.21.1ubuntu2.6) ...
+#11 10.89 Selecting previously unselected package build-essential.
+#11 10.90 Preparing to unpack .../33-build-essential_12.9ubuntu3_amd64.deb ...
+#11 10.90 Unpacking build-essential (12.9ubuntu3) ...
+#11 10.91 Selecting previously unselected package libarchive13:amd64.
+#11 10.92 Preparing to unpack .../34-libarchive13_3.6.0-1ubuntu1.8_amd64.deb ...
+#11 10.92 Unpacking libarchive13:amd64 (3.6.0-1ubuntu1.8) ...
+#11 10.94 Selecting previously unselected package libjsoncpp25:amd64.
+#11 10.94 Preparing to unpack .../35-libjsoncpp25_1.9.5-3_amd64.deb ...
+#11 10.94 Unpacking libjsoncpp25:amd64 (1.9.5-3) ...
+#11 10.96 Selecting previously unselected package librhash0:amd64.
+#11 10.96 Preparing to unpack .../36-librhash0_1.4.2-1ubuntu1_amd64.deb ...
+#11 10.96 Unpacking librhash0:amd64 (1.4.2-1ubuntu1) ...
+#11 10.98 Selecting previously unselected package dh-elpa-helper.
+#11 10.98 Preparing to unpack .../37-dh-elpa-helper_2.0.9ubuntu1_all.deb ...
+#11 10.98 Unpacking dh-elpa-helper (2.0.9ubuntu1) ...
+#11 10.99 Selecting previously unselected package emacsen-common.
+#11 11.00 Preparing to unpack .../38-emacsen-common_3.0.4_all.deb ...
+#11 11.01 Unpacking emacsen-common (3.0.4) ...
+#11 11.03 Selecting previously unselected package cmake-data.
+#11 11.03 Preparing to unpack .../39-cmake-data_3.22.1-1ubuntu1.22.04.2_all.deb ...
+#11 11.04 Unpacking cmake-data (3.22.1-1ubuntu1.22.04.2) ...
+#11 11.56 Selecting previously unselected package cmake.
+#11 11.56 Preparing to unpack .../40-cmake_3.22.1-1ubuntu1.22.04.2_amd64.deb ...
+#11 11.56 Unpacking cmake (3.22.1-1ubuntu1.22.04.2) ...
+#11 11.66 Setting up gcc-11-base:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.66 Setting up lto-disabled-list (24) ...
+#11 11.67 Setting up libarchive13:amd64 (3.6.0-1ubuntu1.8) ...
+#11 11.67 Setting up binutils-common:amd64 (2.38-4ubuntu2.12) ...
+#11 11.67 Setting up libctf-nobfd0:amd64 (2.38-4ubuntu2.12) ...
+#11 11.67 Setting up bzip2 (1.0.8-5ubuntu0.1) ...
+#11 11.68 Setting up libasan6:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.68 Setting up libuv1:amd64 (1.43.0-1ubuntu0.1) ...
+#11 11.68 Setting up emacsen-common (3.0.4) ...
+#11 11.71 Setting up make (4.3-4.1build1) ...
+#11 11.71 Setting up libmpfr6:amd64 (4.1.0-3build3) ...
+#11 11.72 Setting up dh-elpa-helper (2.0.9ubuntu1) ...
+#11 11.72 Setting up xz-utils (5.2.5-2ubuntu1.1) ...
+#11 11.73 update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzma.1.gz because associated file /usr/share/man/man1/xz.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/unlzma.1.gz because associated file /usr/share/man/man1/unxz.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzcat.1.gz because associated file /usr/share/man/man1/xzcat.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzmore.1.gz because associated file /usr/share/man/man1/xzmore.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzless.1.gz because associated file /usr/share/man/man1/xzless.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzdiff.1.gz because associated file /usr/share/man/man1/xzdiff.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzcmp.1.gz because associated file /usr/share/man/man1/xzcmp.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzgrep.1.gz because associated file /usr/share/man/man1/xzgrep.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzegrep.1.gz because associated file /usr/share/man/man1/xzegrep.1.gz (of link group lzma) doesn't exist
+#11 11.73 update-alternatives: warning: skip creation of /usr/share/man/man1/lzfgrep.1.gz because associated file /usr/share/man/man1/xzfgrep.1.gz (of link group lzma) doesn't exist
+#11 11.73 Setting up libmpc3:amd64 (1.2.1-2build1) ...
+#11 11.74 Setting up libatomic1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 11.74 Setting up patch (2.7.6-7build2) ...
+#11 11.74 Setting up libjsoncpp25:amd64 (1.9.5-3) ...
+#11 11.74 Setting up libdpkg-perl (1.21.1ubuntu2.6) ...
+#11 11.75 Setting up libubsan1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 11.75 Setting up librhash0:amd64 (1.4.2-1ubuntu1) ...
+#11 11.75 Setting up cmake-data (3.22.1-1ubuntu1.22.04.2) ...
+#11 11.78 Setting up libbinutils:amd64 (2.38-4ubuntu2.12) ...
+#11 11.79 Setting up libisl23:amd64 (0.24-2build1) ...
+#11 11.79 Setting up libcc1-0:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 11.79 Setting up liblsan0:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 11.79 Setting up libitm1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 11.80 Setting up libtsan0:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.80 Setting up libctf0:amd64 (2.38-4ubuntu2.12) ...
+#11 11.80 Setting up cpp-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.80 Setting up libgcc-11-dev:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.81 Setting up cpp (4:11.2.0-1ubuntu1) ...
+#11 11.81 Setting up cmake (3.22.1-1ubuntu1.22.04.2) ...
+#11 11.81 Setting up binutils-x86-64-linux-gnu (2.38-4ubuntu2.12) ...
+#11 11.82 Setting up binutils (2.38-4ubuntu2.12) ...
+#11 11.82 Setting up dpkg-dev (1.21.1ubuntu2.6) ...
+#11 11.82 Setting up libstdc++-11-dev:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.83 Setting up gcc-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.83 Setting up g++-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 11.83 Setting up gcc (4:11.2.0-1ubuntu1) ...
+#11 11.84 Setting up g++ (4:11.2.0-1ubuntu1) ...
+#11 11.86 update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+#11 11.86 update-alternatives: warning: skip creation of /usr/share/man/man1/c++.1.gz because associated file /usr/share/man/man1/g++.1.gz (of link group c++) doesn't exist
+#11 11.86 Setting up build-essential (12.9ubuntu3) ...
+#11 11.86 Processing triggers for libc-bin (2.35-0ubuntu3.6) ...
+#11 13.04 Collecting cython<3
+#11 13.10   Downloading Cython-0.29.37-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl (1.9 MB)
+#11 13.20      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 18.1 MB/s eta 0:00:00
+#11 13.37 Collecting onnx
+#11 13.39   Downloading onnx-1.22.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (19.1 MB)
+#11 13.60      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 19.1/19.1 MB 148.9 MB/s eta 0:00:00
+#11 14.15 Collecting protobuf>=4.25.1
+#11 14.15   Downloading protobuf-7.36.1-cp310-abi3-manylinux2014_x86_64.whl (343 kB)
+#11 14.16      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 343.2/343.2 KB 326.8 MB/s eta 0:00:00
+#11 14.16 Requirement already satisfied: ml_dtypes>=0.5.4 in /usr/local/lib/python3.10/dist-packages (from onnx) (0.5.4)
+#11 14.16 Requirement already satisfied: numpy>=1.23.2 in /usr/local/lib/python3.10/dist-packages (from onnx) (1.26.4)
+#11 14.16 Requirement already satisfied: typing_extensions>=4.15.0 in /usr/local/lib/python3.10/dist-packages (from onnx) (4.16.0)
+#11 15.58 Installing collected packages: protobuf, cython, onnx
+#11 15.58   Attempting uninstall: protobuf
+#11 15.58     Found existing installation: protobuf 3.20.3
+#11 15.63     Uninstalling protobuf-3.20.3:
+#11 15.96       Successfully uninstalled protobuf-3.20.3
+#11 19.33 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+#11 19.33 mediapipe 0.10.11 requires protobuf<4,>=3.11, but you have protobuf 7.36.1 which is incompatible.
+#11 19.33 Successfully installed cython-0.29.37 onnx-1.22.0 protobuf-7.36.1
+#11 19.33 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#11 19.91 Collecting insightface==0.7.3
+#11 19.97   Downloading insightface-0.7.3.tar.gz (439 kB)
+#11 20.00      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 439.5/439.5 KB 15.3 MB/s eta 0:00:00
+#11 20.03   Preparing metadata (pyproject.toml): started
+#11 20.77   Preparing metadata (pyproject.toml): finished with status 'done'
+#11 20.77 Requirement already satisfied: prettytable in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (3.18.0)
+#11 20.77 Requirement already satisfied: onnx in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (1.22.0)
+#11 20.77 Requirement already satisfied: requests in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (2.34.2)
+#11 20.77 Requirement already satisfied: tqdm in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (4.70.1)
+#11 20.78 Requirement already satisfied: cython in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (0.29.37)
+#11 20.78 Requirement already satisfied: numpy in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (1.26.4)
+#11 20.79 Collecting easydict
+#11 20.80   Downloading easydict-1.13-py3-none-any.whl (6.8 kB)
+#11 20.80 Requirement already satisfied: scikit-image in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (0.22.0)
+#11 20.80 Requirement already satisfied: scipy in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (1.15.3)
+#11 20.80 Requirement already satisfied: scikit-learn in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (1.7.2)
+#11 20.84 Collecting albumentations
+#11 20.85   Downloading albumentations-2.0.8-py3-none-any.whl (369 kB)
+#11 20.86      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 369.4/369.4 KB 29.2 MB/s eta 0:00:00
+#11 20.87 Requirement already satisfied: matplotlib in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (3.10.9)
+#11 20.87 Requirement already satisfied: Pillow in /usr/local/lib/python3.10/dist-packages (from insightface==0.7.3) (12.3.0)
+#11 20.88 Requirement already satisfied: pydantic>=2.9.2 in /usr/local/lib/python3.10/dist-packages (from albumentations->insightface==0.7.3) (2.13.5)
+#11 20.88 Requirement already satisfied: PyYAML in /usr/local/lib/python3.10/dist-packages (from albumentations->insightface==0.7.3) (6.0.3)
+#11 21.03 Collecting opencv-python-headless>=4.9.0.80
+#11 21.03   Downloading opencv_python_headless-5.0.0.93-cp37-abi3-manylinux_2_28_x86_64.whl (61.2 MB)
+#11 21.42      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 61.2/61.2 MB 310.3 MB/s eta 0:00:00
+#11 21.53 Collecting albucore==0.0.24
+#11 21.54   Downloading albucore-0.0.24-py3-none-any.whl (15 kB)
+#11 22.96 Collecting stringzilla>=3.10.4
+#11 22.97   Downloading stringzilla-5.1.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (4.3 MB)
+#11 23.01      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 325.5 MB/s eta 0:00:00
+#11 24.09 Collecting simsimd>=5.9.2
+#11 24.10   Downloading simsimd-6.5.16-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (582 kB)
+#11 24.10      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 582.8/582.8 KB 338.3 MB/s eta 0:00:00
+#11 24.14 Requirement already satisfied: packaging>=20.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (26.3)
+#11 24.15 Requirement already satisfied: pyparsing>=3 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (3.3.2)
+#11 24.15 Requirement already satisfied: contourpy>=1.0.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (1.3.2)
+#11 24.15 Requirement already satisfied: kiwisolver>=1.3.1 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (1.5.1)
+#11 24.15 Requirement already satisfied: fonttools>=4.22.0 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (4.65.0)
+#11 24.15 Requirement already satisfied: python-dateutil>=2.7 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (2.9.0.post0)
+#11 24.15 Requirement already satisfied: cycler>=0.10 in /usr/local/lib/python3.10/dist-packages (from matplotlib->insightface==0.7.3) (0.12.1)
+#11 24.17 Requirement already satisfied: typing_extensions>=4.15.0 in /usr/local/lib/python3.10/dist-packages (from onnx->insightface==0.7.3) (4.16.0)
+#11 24.17 Requirement already satisfied: ml_dtypes>=0.5.4 in /usr/local/lib/python3.10/dist-packages (from onnx->insightface==0.7.3) (0.5.4)
+#11 24.17 Requirement already satisfied: protobuf>=4.25.1 in /usr/local/lib/python3.10/dist-packages (from onnx->insightface==0.7.3) (7.36.1)
+#11 24.18 Requirement already satisfied: wcwidth>=0.3.5 in /usr/local/lib/python3.10/dist-packages (from prettytable->insightface==0.7.3) (0.8.3)
+#11 24.18 Requirement already satisfied: urllib3<3,>=1.26 in /usr/local/lib/python3.10/dist-packages (from requests->insightface==0.7.3) (2.7.0)
+#11 24.18 Requirement already satisfied: certifi>=2023.5.7 in /usr/local/lib/python3.10/dist-packages (from requests->insightface==0.7.3) (2026.7.22)
+#11 24.18 Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests->insightface==0.7.3) (3.5.1)
+#11 24.18 Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests->insightface==0.7.3) (3.19)
+#11 24.22 Requirement already satisfied: networkx>=2.8 in /usr/local/lib/python3.10/dist-packages (from scikit-image->insightface==0.7.3) (3.4.2)
+#11 24.22 Requirement already satisfied: imageio>=2.27 in /usr/local/lib/python3.10/dist-packages (from scikit-image->insightface==0.7.3) (2.31.1)
+#11 24.22 Requirement already satisfied: tifffile>=2022.8.12 in /usr/local/lib/python3.10/dist-packages (from scikit-image->insightface==0.7.3) (2025.5.10)
+#11 24.22 Requirement already satisfied: lazy_loader>=0.3 in /usr/local/lib/python3.10/dist-packages (from scikit-image->insightface==0.7.3) (0.5)
+#11 24.29 Requirement already satisfied: threadpoolctl>=3.1.0 in /usr/local/lib/python3.10/dist-packages (from scikit-learn->insightface==0.7.3) (3.6.0)
+#11 24.29 Requirement already satisfied: joblib>=1.2.0 in /usr/local/lib/python3.10/dist-packages (from scikit-learn->insightface==0.7.3) (1.6.0)
+#11 24.40 Requirement already satisfied: cloudpickle>=3.0 in /usr/local/lib/python3.10/dist-packages (from joblib>=1.2.0->scikit-learn->insightface==0.7.3) (3.1.2)
+#11 25.02 Collecting numpy
+#11 25.02   Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+#11 25.08      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 323.5 MB/s eta 0:00:00
+#11 25.12 Requirement already satisfied: pydantic-core==2.46.5 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.9.2->albumentations->insightface==0.7.3) (2.46.5)
+#11 25.12 Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.9.2->albumentations->insightface==0.7.3) (0.8.0)
+#11 25.13 Requirement already satisfied: typing-inspection>=0.4.2 in /usr/local/lib/python3.10/dist-packages (from pydantic>=2.9.2->albumentations->insightface==0.7.3) (0.4.4)
+#11 25.13 Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.10/dist-packages (from python-dateutil>=2.7->matplotlib->insightface==0.7.3) (1.17.0)
+#11 25.18 Building wheels for collected packages: insightface
+#11 25.19   Building wheel for insightface (pyproject.toml): started
+#11 28.14   Building wheel for insightface (pyproject.toml): finished with status 'done'
+#11 28.15   Created wheel for insightface: filename=insightface-0.7.3-cp310-cp310-linux_x86_64.whl size=980723 sha256=8773a772c89f39f3239f6ab01170561ad0a178f5535a07d0ba22e9ba2253d951
+#11 28.15   Stored in directory: /tmp/pip-ephem-wheel-cache-1m_xrixx/wheels/e3/d0/80/e3773fb8b6d1cca87ea1d33d9b1f20a223a6493c896da249b5
+#11 28.15 Successfully built insightface
+#11 29.20 Installing collected packages: simsimd, easydict, stringzilla, numpy, opencv-python-headless, albucore, albumentations, insightface
+#11 29.38   Attempting uninstall: numpy
+#11 29.38     Found existing installation: numpy 1.26.4
+#11 30.01     Uninstalling numpy-1.26.4:
+#11 30.35       Successfully uninstalled numpy-1.26.4
+#11 33.50 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+#11 33.50 mediapipe 0.10.11 requires protobuf<4,>=3.11, but you have protobuf 7.36.1 which is incompatible.
+#11 33.50 Successfully installed albucore-0.0.24 albumentations-2.0.8 easydict-1.13 insightface-0.7.3 numpy-2.2.6 opencv-python-headless-5.0.0.93 simsimd-6.5.16 stringzilla-5.1.2
+#11 33.50 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#11 34.77 Collecting numpy==1.26.4
+#11 34.82   Downloading numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+#11 35.13      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 125.5 MB/s eta 0:00:00
+#11 35.32 Collecting opencv-python==4.9.0.80
+#11 35.33   Downloading opencv_python-4.9.0.80-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (62.2 MB)
+#11 35.57      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 62.2/62.2 MB 287.0 MB/s eta 0:00:00
+#11 35.65 Installing collected packages: opencv-python, numpy
+#11 35.65   Attempting uninstall: opencv-python
+#11 35.65     Found existing installation: opencv-python 4.9.0.80
+#11 35.70     Uninstalling opencv-python-4.9.0.80:
+#11 35.80       Successfully uninstalled opencv-python-4.9.0.80
+#11 36.91   Attempting uninstall: numpy
+#11 36.91     Found existing installation: numpy 2.2.6
+#11 37.55     Uninstalling numpy-2.2.6:
+#11 37.56       Successfully uninstalled numpy-2.2.6
+#11 39.47 Successfully installed numpy-1.26.4 opencv-python-4.9.0.80
+#11 39.47 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#11 39.95 Found existing installation: opencv-python-headless 5.0.0.93
+#11 39.98 Uninstalling opencv-python-headless-5.0.0.93:
+#11 40.00   Successfully uninstalled opencv-python-headless-5.0.0.93
+#11 40.01 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+#11 40.10 Reading package lists...
+#11 41.36 Building dependency tree...
+#11 41.65 Reading state information...
+#11 41.83 The following packages were automatically installed and are no longer required:
+#11 41.83   binutils binutils-common binutils-x86-64-linux-gnu bzip2 cmake-data cpp
+#11 41.83   cpp-11 dh-elpa-helper dpkg-dev emacsen-common g++ g++-11 gcc gcc-11
+#11 41.83   gcc-11-base libarchive13 libasan6 libatomic1 libbinutils libcc1-0
+#11 41.83   libctf-nobfd0 libctf0 libdpkg-perl libgcc-11-dev libisl23 libitm1
+#11 41.83   libjsoncpp25 liblsan0 libmpc3 libmpfr6 librhash0 libstdc++-11-dev libtsan0
+#11 41.83   libubsan1 libuv1 lto-disabled-list make xz-utils
+#11 41.83 Use 'apt autoremove' to remove them.
+#11 41.85 The following packages will be REMOVED:
+#11 41.85   build-essential* cmake*
+#11 42.02 0 upgraded, 0 newly installed, 2 to remove and 66 not upgraded.
+#11 42.02 After this operation, 21.3 MB disk space will be freed.
+#11 42.03 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 19380 files and directories currently installed.)
+#11 42.04 Removing build-essential (12.9ubuntu3) ...
+#11 42.05 Removing cmake (3.22.1-1ubuntu1.22.04.2) ...
+#11 42.14 Reading package lists...
+#11 43.39 Building dependency tree...
+#11 43.69 Reading state information...
+#11 43.89 The following packages will be REMOVED:
+#11 43.89   binutils binutils-common binutils-x86-64-linux-gnu bzip2 cmake-data cpp
+#11 43.89   cpp-11 dh-elpa-helper dpkg-dev emacsen-common g++ g++-11 gcc gcc-11
+#11 43.89   gcc-11-base libarchive13 libasan6 libatomic1 libbinutils libcc1-0
+#11 43.89   libctf-nobfd0 libctf0 libdpkg-perl libgcc-11-dev libisl23 libitm1
+#11 43.89   libjsoncpp25 liblsan0 libmpc3 libmpfr6 librhash0 libstdc++-11-dev libtsan0
+#11 43.89   libubsan1 libuv1 lto-disabled-list make xz-utils
+#11 44.06 0 upgraded, 0 newly installed, 38 to remove and 66 not upgraded.
+#11 44.06 After this operation, 204 MB disk space will be freed.
+#11 44.06 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 19355 files and directories currently installed.)
+#11 44.08 Removing g++ (4:11.2.0-1ubuntu1) ...
+#11 44.10 Removing g++-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.11 Removing gcc (4:11.2.0-1ubuntu1) ...
+#11 44.12 Removing gcc-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.14 Removing dpkg-dev (1.21.1ubuntu2.6) ...
+#11 44.15 Removing binutils (2.38-4ubuntu2.12) ...
+#11 44.16 Removing binutils-x86-64-linux-gnu (2.38-4ubuntu2.12) ...
+#11 44.18 Removing libctf0:amd64 (2.38-4ubuntu2.12) ...
+#11 44.19 Removing libbinutils:amd64 (2.38-4ubuntu2.12) ...
+#11 44.20 Removing binutils-common:amd64 (2.38-4ubuntu2.12) ...
+#11 44.21 Removing bzip2 (1.0.8-5ubuntu0.1) ...
+#11 44.22 Removing cmake-data (3.22.1-1ubuntu1.22.04.2) ...
+#11 44.42 Removing cpp (4:11.2.0-1ubuntu1) ...
+#11 44.43 Removing cpp-11 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.44 Removing dh-elpa-helper (2.0.9ubuntu1) ...
+#11 44.45 Removing emacsen-common (3.0.4) ...
+#11 44.49 Removing libstdc++-11-dev:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.56 Removing libgcc-11-dev:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.58 Removing libtsan0:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.59 Removing libasan6:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.60 Removing gcc-11-base:amd64 (11.4.0-1ubuntu1~22.04.3) ...
+#11 44.61 Removing libarchive13:amd64 (3.6.0-1ubuntu1.8) ...
+#11 44.62 Removing libatomic1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 44.63 Removing libcc1-0:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 44.64 Removing libctf-nobfd0:amd64 (2.38-4ubuntu2.12) ...
+#11 44.65 Removing libdpkg-perl (1.21.1ubuntu2.6) ...
+#11 44.67 Removing libisl23:amd64 (0.24-2build1) ...
+#11 44.68 Removing libitm1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 44.69 Removing libjsoncpp25:amd64 (1.9.5-3) ...
+#11 44.70 Removing liblsan0:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 44.71 Removing libmpc3:amd64 (1.2.1-2build1) ...
+#11 44.71 Removing libmpfr6:amd64 (4.1.0-3build3) ...
+#11 44.73 Removing librhash0:amd64 (1.4.2-1ubuntu1) ...
+#11 44.74 Removing libubsan1:amd64 (12.3.0-1ubuntu1~22.04.3) ...
+#11 44.74 Removing libuv1:amd64 (1.43.0-1ubuntu0.1) ...
+#11 44.75 Removing lto-disabled-list (24) ...
+#11 44.76 Removing make (4.3-4.1build1) ...
+#11 44.78 Removing xz-utils (5.2.5-2ubuntu1.1) ...
+#11 44.81 Processing triggers for libc-bin (2.35-0ubuntu3.6) ...
+#11 45.29 Traceback (most recent call last):
+#11 45.29   File "<string>", line 1, in <module>
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/insightface/__init__.py", line 18, in <module>
+#11 45.29     from . import app
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/insightface/app/__init__.py", line 2, in <module>
+#11 45.29     from .mask_renderer import *
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/insightface/app/mask_renderer.py", line 4, in <module>
+#11 45.29     import albumentations as A
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albumentations/__init__.py", line 18, in <module>
+#11 45.29     from .augmentations import *
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/__init__.py", line 1, in <module>
+#11 45.29     from .blur.transforms import *
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/blur/transforms.py", line 23, in <module>
+#11 45.29     from albumentations.augmentations.pixel import functional as fpixel
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/pixel/functional.py", line 18, in <module>
+#11 45.29     from albucore import (
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albucore/__init__.py", line 13, in <module>
+#11 45.29     from .decorators import *
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albucore/decorators.py", line 7, in <module>
+#11 45.29     from albucore.utils import MONO_CHANNEL_DIMENSIONS, NUM_MULTI_CHANNEL_DIMENSIONS, P
+#11 45.29   File "/usr/local/lib/python3.10/dist-packages/albucore/utils.py", line 44, in <module>
+#11 45.29     np.uint8: cv2.CV_8U,
+#11 45.29 AttributeError: module 'cv2' has no attribute 'CV_8U'
+#11 ERROR: process "/bin/sh -c apt-get update  && apt-get install -y --no-install-recommends build-essential cmake  && pip install --no-cache-dir \"cython<3\" onnx  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3  && pip install --no-cache-dir --force-reinstall --no-deps       \"numpy==1.26.4\" \"opencv-python==4.9.0.80\"  && pip uninstall -y opencv-python-headless || true  && apt-get purge -y build-essential cmake  && apt-get autoremove -y  && rm -rf /var/lib/apt/lists/*  && python -c \"import numpy, cv2, onnxruntime, insightface, torch; assert numpy.__version__.startswith('1.26'), 'numpy remonte en ' + numpy.__version__; print('numpy', numpy.__version__, '| cv2', cv2.__version__,       '| ort', onnxruntime.__version__, '| insightface', insightface.__version__)\"" did not complete successfully: exit code: 1
+------
+ > [ 6/12] RUN apt-get update  && apt-get install -y --no-install-recommends build-essential cmake  && pip install --no-cache-dir "cython<3" onnx  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3  && pip install --no-cache-dir --force-reinstall --no-deps       "numpy==1.26.4" "opencv-python==4.9.0.80"  && pip uninstall -y opencv-python-headless || true  && apt-get purge -y build-essential cmake  && apt-get autoremove -y  && rm -rf /var/lib/apt/lists/*  && python -c "import numpy, cv2, onnxruntime, insightface, torch; assert numpy.__version__.startswith('1.26'), 'numpy remonte en ' + numpy.__version__; print('numpy', numpy.__version__, '| cv2', cv2.__version__,       '| ort', onnxruntime.__version__, '| insightface', insightface.__version__)":
+45.29     from albumentations.augmentations.pixel import functional as fpixel
+45.29   File "/usr/local/lib/python3.10/dist-packages/albumentations/augmentations/pixel/functional.py", line 18, in <module>
+45.29     from albucore import (
+45.29   File "/usr/local/lib/python3.10/dist-packages/albucore/__init__.py", line 13, in <module>
+45.29     from .decorators import *
+45.29   File "/usr/local/lib/python3.10/dist-packages/albucore/decorators.py", line 7, in <module>
+45.29     from albucore.utils import MONO_CHANNEL_DIMENSIONS, NUM_MULTI_CHANNEL_DIMENSIONS, P
+45.29   File "/usr/local/lib/python3.10/dist-packages/albucore/utils.py", line 44, in <module>
+45.29     np.uint8: cv2.CV_8U,
+45.29 AttributeError: module 'cv2' has no attribute 'CV_8U'
+------
+Dockerfile.latentsync:70
+--------------------
+  69 |     # ne pas relancer la cascade.
+  70 | >>> RUN apt-get update \
+  71 | >>>  && apt-get install -y --no-install-recommends build-essential cmake \
+  72 | >>>  && pip install --no-cache-dir "cython<3" onnx \
+  73 | >>>  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3 \
+  74 | >>>  && pip install --no-cache-dir --force-reinstall --no-deps \
+  75 | >>>       "numpy==1.26.4" "opencv-python==4.9.0.80" \
+  76 | >>>  && pip uninstall -y opencv-python-headless || true \
+  77 | >>>  && apt-get purge -y build-essential cmake \
+  78 | >>>  && apt-get autoremove -y \
+  79 | >>>  && rm -rf /var/lib/apt/lists/* \
+  80 | >>>  && python -c "\
+  81 | >>> import numpy, cv2, onnxruntime, insightface, torch; \
+  82 | >>> assert numpy.__version__.startswith('1.26'), 'numpy remonte en ' + numpy.__version__; \
+  83 | >>> print('numpy', numpy.__version__, '| cv2', cv2.__version__, \
+  84 | >>>       '| ort', onnxruntime.__version__, '| insightface', insightface.__version__)"
+  85 |     
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c apt-get update  && apt-get install -y --no-install-recommends build-essential cmake  && pip install --no-cache-dir \"cython<3\" onnx  && pip install --no-cache-dir --no-build-isolation insightface==0.7.3  && pip install --no-cache-dir --force-reinstall --no-deps       \"numpy==1.26.4\" \"opencv-python==4.9.0.80\"  && pip uninstall -y opencv-python-headless || true  && apt-get purge -y build-essential cmake  && apt-get autoremove -y  && rm -rf /var/lib/apt/lists/*  && python -c \"import numpy, cv2, onnxruntime, insightface, torch; assert numpy.__version__.startswith('1.26'), 'numpy remonte en ' + numpy.__version__; print('numpy', numpy.__version__, '| cv2', cv2.__version__,       '| ort', onnxruntime.__version__, '| insightface', insightface.__version__)\"" did not complete successfully: exit code: 1
