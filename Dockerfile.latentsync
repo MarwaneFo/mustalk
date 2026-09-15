@@ -39,9 +39,16 @@ WORKDIR /opt/LatentSync
 # Les dependances declarees d'abord : elles fixent numpy 1.26.4,
 # opencv 4.9 et onnxruntime-gpu 1.21, versions dont la suite depend.
 #
+# Deux paquets sont retires du fichier avant installation.
+#
 # gradio n'a aucun sens dans un worker : c'est l'interface de demonstration,
 # et elle tire a elle seule une centaine de megaoctets de dependances.
-RUN sed -i '/^gradio/d' requirements.txt \
+#
+# insightface parce qu'il doit etre compile, et que le compilateur n'arrive
+# qu'a l'etape suivante : le laisser ici le ferait echouer sur un
+# "x86_64-linux-gnu-gcc: No such file or directory". Le sortir de l'ordre
+# d'installation ne suffisait pas, il fallait le sortir du fichier.
+RUN sed -i '/^gradio/d;/^insightface/d' requirements.txt \
  && pip install --no-cache-dir -r requirements.txt \
  && pip install --no-cache-dir runpod requests
 
