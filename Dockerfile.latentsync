@@ -1,0 +1,90 @@
+# LatentSync (ByteDance, Apache 2.0) en image Serverless autonome.
+#
+# Contrairement a MuseTalk, ce modele ne pre-calcule pas d'avatar : il
+# retraite la video source a chaque appel. L'image n'embarque donc que le
+# modele, ses dependances et la video d'Inna -- ni masques, ni latents,
+# ni full_imgs a regenerer au demarrage.
+#
+# Base cuDNN 9 : onnxruntime-gpu 1.21, exige par insightface qui fait la
+# detection de visage a chaque image, cible CUDA 12 avec cuDNN 9. Une base
+# en cuDNN 8 le ferait echouer au chargement du fournisseur CUDA, et il
+# retomberait silencieusement sur le processeur.
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/opt/hf \
+    LATENTSYNC_ROOT=/opt/LatentSync \
+    LATENTSYNC_CONFIG=configs/unet/stage2_512.yaml \
+    LATENTSYNC_CKPT=checkpoints/latentsync_unet.pt \
+    LATENTSYNC_VIDEO=/opt/LatentSync/data/Inna.mp4
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.10 python3.10-dev python3-pip git curl ca-certificates \
+      ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+ && rm -rf /var/lib/apt/lists/* \
+ && ln -sf /usr/bin/python3.10 /usr/local/bin/python \
+ && ln -sf /usr/bin/python3.10 /usr/local/bin/python3
+
+# Le depot est fige sur un commit : "main" changerait sous nos pieds entre
+# deux builds, et un modele qui bouge tout seul est impossible a deboguer.
+ARG LATENTSYNC_REF=main
+RUN git clone https://github.com/bytedance/LatentSync.git /opt/LatentSync \
+ && cd /opt/LatentSync && git checkout "$LATENTSYNC_REF" \
+ && rm -rf .git
+
+WORKDIR /opt/LatentSync
+
+# gradio n'a aucun sens dans un worker : c'est l'interface de demonstration,
+# et elle tire a elle seule une centaine de megaoctets de dependances.
+RUN sed -i '/^gradio/d' requirements.txt \
+ && pip install --no-cache-dir -r requirements.txt \
+ && pip install --no-cache-dir runpod requests
+
+# --- Poids ---------------------------------------------------------------
+# Tout est embarque : un worker Serverless ne doit rien telecharger au
+# demarrage, sous peine d'ajouter du reseau a un demarrage a froid deja long
+# et d'echouer si le depot distant est indisponible.
+RUN huggingface-cli download ByteDance/LatentSync-1.6 \
+      latentsync_unet.pt whisper/tiny.pt --local-dir checkpoints \
+ && ls -la checkpoints checkpoints/whisper
+
+# Le VAE est charge par son nom depuis HuggingFace : on le met en cache.
+RUN python -c "\
+from diffusers import AutoencoderKL; \
+AutoencoderKL.from_pretrained('stabilityai/sd-vae-ft-mse'); \
+print('sd-vae-ft-mse en cache')"
+
+# insightface telecharge son paquet de modeles au premier appel. Sans GPU
+# dans le runner, on prepare avec le fournisseur processeur -- seuls les
+# fichiers comptent, ils sont identiques.
+RUN python -c "\
+from insightface.app import FaceAnalysis; \
+a = FaceAnalysis(allowed_modules=['detection','landmark_2d_106'], \
+                 root='checkpoints/auxiliary', providers=['CPUExecutionProvider']); \
+a.prepare(ctx_id=-1, det_size=(512,512)); \
+print('insightface pret')"
+
+# --- Vidéo source --------------------------------------------------------
+COPY avatar/Inna.mp4 /opt/LatentSync/data/Inna.mp4
+
+# --- Handler -------------------------------------------------------------
+COPY handler_latentsync.py /opt/LatentSync/handler.py
+
+# Verification a la construction : mieux vaut echouer ici, ou le journal est
+# lisible, qu'au premier job sur un worker distant.
+RUN python -c "\
+import torch, onnxruntime, insightface, diffusers, transformers; \
+from latentsync.models.unet import UNet3DConditionModel; \
+from latentsync.pipelines.lipsync_pipeline import LipsyncPipeline; \
+from latentsync.whisper.audio2feature import Audio2Feature; \
+from DeepCache import DeepCacheSDHelper; \
+import os; \
+assert os.path.getsize('checkpoints/latentsync_unet.pt') > 4e9, 'unet incomplet'; \
+assert os.path.exists('/opt/LatentSync/data/Inna.mp4'), 'video absente'; \
+print('torch', torch.__version__, '| ort', onnxruntime.__version__, \
+      '| diffusers', diffusers.__version__); \
+print('imports et poids verifies')"
+
+CMD ["python", "-u", "handler.py"]

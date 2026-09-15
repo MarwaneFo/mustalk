@@ -1,0 +1,86 @@
+name: Build & push LatentSync
+
+# Second modele de synchronisation labiale, publie a cote de MuseTalk et non
+# a sa place : les deux endpoints coexistent, on compare, on decide ensuite.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile.latentsync
+      - handler_latentsync.py
+      - avatar/Inna.mp4
+      - .github/workflows/build-latentsync.yml
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: latentsync-serverless
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Le runner n'a qu'une vingtaine de gigaoctets libres ; l'image en fait
+      # une douzaine, dont 4,8 pour le seul UNet.
+      - name: Liberer de l'espace disque
+        run: |
+          echo "Avant :"; df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/.ghcup /opt/hostedtoolcache/CodeQL \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          echo "Apres :"; df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Noms d'images
+        id: img
+        run: |
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          echo "out=${REGISTRY}/${owner}/${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "ts=$(date -u +%Y%m%d-%H%M)" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.latentsync
+          push: true
+          tags: |
+            ${{ steps.img.outputs.out }}:latest
+            ${{ steps.img.outputs.out }}:${{ steps.img.outputs.ts }}
+          provenance: false
+
+      - name: Recapitulatif
+        run: |
+          {
+            echo "## Image LatentSync publiee"
+            echo '```'
+            echo "${{ steps.img.outputs.out }}:${{ steps.img.outputs.ts }}"
+            echo "${{ steps.img.outputs.out }}:latest"
+            echo '```'
+            echo "### Endpoint a creer"
+            echo "- Nom : \`latentsync-video\`"
+            echo "- GPU : **Ampere, Ada ou Hopper** — A5000, L40S, 4090, A100."
+            echo "  **Jamais Blackwell** (lignes \`PRO\`) : torch 2.5.1 n'a pas de"
+            echo "  noyaux compiles pour cette architecture."
+            echo "- VRAM : ~18 Go en 512 px. Les 24 Go d'une A5000 suffisent."
+            echo "- Execution Timeout : **1200 s**. La diffusion est plus lente"
+            echo "  que MuseTalk, et le plafond RunPod compte la file d'attente."
+            echo ""
+            echo "### Licence"
+            echo "Apache 2.0 — usage commercial autorise, contrairement aux poids XTTS."
+          } >> "$GITHUB_STEP_SUMMARY"
