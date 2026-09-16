@@ -21,15 +21,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python3
 
+# L'ordre compte : runpod tire numpy 2.x, alors que chatterbox exige la
+# serie 1. On installe donc les outils en premier et chatterbox en
+# dernier, pour que sa contrainte soit celle qui s'applique. Dans
+# l'autre sens numpy remonte en 2.2 et les extensions compilees contre
+# la serie 1 cessent de se charger.
 # Installation depuis le depot : la version publiee sur PyPI n'expose pas
 # toujours le dernier modele multilingue, et c'est justement le v3 qu'on veut.
 # gradio est retire : c'est l'interface de demonstration, inutile dans un
 # worker, et elle tire a elle seule une centaine de megaoctets.
-RUN git clone --depth 1 https://github.com/resemble-ai/chatterbox.git /opt/chatterbox \
+RUN pip install --no-cache-dir runpod requests soundfile \
+ && git clone --depth 1 https://github.com/resemble-ai/chatterbox.git /opt/chatterbox \
  && cd /opt/chatterbox \
  && sed -i '/^ *"gradio/d' pyproject.toml \
  && pip install --no-cache-dir . \
- && pip install --no-cache-dir runpod requests soundfile \
  && rm -rf /opt/chatterbox/.git
 
 # numpy reste en 1.x : chatterbox le declare ainsi, et des dependances
