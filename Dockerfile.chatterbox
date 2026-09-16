@@ -21,13 +21,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python3
 
+# pip et setuptools de la base sont ceux de 2022 : setuptools 59 ignore
+# en silence la section [project] du format moderne, et pip produit alors
+# un paquet anonyme "UNKNOWN-0.0.0", sans nom ni dependances. On les met
+# donc a jour avant toute installation.
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+ && python -c "import setuptools; print('setuptools', setuptools.__version__)"
+
 # Installation depuis le depot, pas depuis PyPI : la version publiee n'expose
 # pas toujours le dernier modele multilingue, et c'est le v3 qu'on veut.
 #
-# On n'edite PAS pyproject.toml. Une version precedente y retirait gradio par
-# sed ; cela cassait les metadonnees, pip construisait un paquet anonyme
-# "UNKNOWN-0.0.0" sans aucune dependance, et chatterbox n'etait en fait jamais
-# installe. L'import ci-dessous echouerait desormais si cela se reproduisait.
+# On n'edite pas pyproject.toml : inutile, et une tentative dans ce sens
+# avait ete soupconnee a tort d'etre la cause du paquet anonyme.
+#
+# L'import qui suit l'installation n'est pas decoratif : sans lui, un paquet
+# vide passe inapercu et se manifeste plus loin sous une forme qui ne designe
+# pas la cause -- ici, une fausse alerte sur numpy.
 RUN git clone --depth 1 https://github.com/resemble-ai/chatterbox.git /opt/chatterbox \
  && cd /opt/chatterbox \
  && pip install --no-cache-dir . \
