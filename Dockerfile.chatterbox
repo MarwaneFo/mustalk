@@ -1,0 +1,76 @@
+# Chatterbox Multilingual v3 (Resemble AI, MIT) en image Serverless.
+#
+# Troisieme moteur vocal, publie a cote de XTTS-v2 et non a sa place. La
+# raison principale n'est pas la qualite mais la licence : les poids XTTS
+# sont sous Coqui Public Model License, donc non commerciaux, et Coqui a
+# ferme en janvier 2024 -- il n'y a plus personne a qui acheter une licence.
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/opt/hf \
+    VOICES_DIR=/opt/voices \
+    DEFAULT_VOICE=inna \
+    CHATTERBOX_T3=v3
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3.10 python3.10-dev python3-pip git curl ca-certificates \
+      ffmpeg libsndfile1 libgl1 libglib2.0-0 \
+ && rm -rf /var/lib/apt/lists/* \
+ && ln -sf /usr/bin/python3.10 /usr/local/bin/python \
+ && ln -sf /usr/bin/python3.10 /usr/local/bin/python3
+
+# Installation depuis le depot : la version publiee sur PyPI n'expose pas
+# toujours le dernier modele multilingue, et c'est justement le v3 qu'on veut.
+# gradio est retire : c'est l'interface de demonstration, inutile dans un
+# worker, et elle tire a elle seule une centaine de megaoctets.
+RUN git clone --depth 1 https://github.com/resemble-ai/chatterbox.git /opt/chatterbox \
+ && cd /opt/chatterbox \
+ && sed -i '/^ *"gradio/d' pyproject.toml \
+ && pip install --no-cache-dir . \
+ && pip install --no-cache-dir runpod requests soundfile \
+ && rm -rf /opt/chatterbox/.git
+
+# numpy reste en 1.x : chatterbox le declare ainsi, et des dependances
+# compilees contre la serie 1 cessent de se charger si une installation
+# ulterieure le remonte en 2 -- le piege qui nous a deja coute deux builds.
+RUN python -c "\
+import numpy; \
+assert numpy.__version__.startswith('1.'), 'numpy remonte en ' + numpy.__version__; \
+print('numpy', numpy.__version__)"
+
+# --- Poids ---------------------------------------------------------------
+# Tout est embarque : un worker Serverless ne doit rien telecharger au
+# demarrage. La liste reprend exactement celle de from_pretrained pour le
+# modele v3 -- un fichier de plus serait du poids mort, un de moins un
+# echec au premier job.
+RUN python -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download(repo_id='ResembleAI/chatterbox', \
+    allow_patterns=['ve.pt', 't3_mtl23ls_v3.safetensors', 's3gen.pt', \
+                    'grapheme_mtl_merged_expanded_v1.json', 'conds.pt', \
+                    'Cangjie5_TC.json']); \
+print('poids chatterbox en cache')"
+
+# --- Voix de reference ---------------------------------------------------
+# Le clonage est zero-shot : ces WAV suffisent, aucun entrainement.
+COPY voices/ /opt/voices/
+
+# --- Handler -------------------------------------------------------------
+COPY handler_chatterbox.py /opt/handler.py
+WORKDIR /opt
+
+# Verification a la construction : mieux vaut echouer ici, ou le journal est
+# lisible, qu'au premier job sur un worker distant.
+RUN python -c "\
+import torch, soundfile, numpy; \
+from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES, MULTILINGUAL_T3_MODELS; \
+import os; \
+assert 'v3' in MULTILINGUAL_T3_MODELS, 'modele v3 absent de cette version'; \
+assert 'fr' in SUPPORTED_LANGUAGES and 'ar' in SUPPORTED_LANGUAGES; \
+voix = sorted(f for f in os.listdir('/opt/voices') if f.endswith('.wav')); \
+assert voix, 'aucune voix embarquee'; \
+print('torch', torch.__version__, '|', len(SUPPORTED_LANGUAGES), 'langues |', voix)"
+
+CMD ["python", "-u", "handler.py"]

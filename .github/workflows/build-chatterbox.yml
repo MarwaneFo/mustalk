@@ -1,0 +1,113 @@
+name: Build & push Chatterbox
+
+# Troisieme moteur vocal, a cote de XTTS-v2 et non a sa place : les deux
+# endpoints coexistent, on compare sur la meme voix de reference, on decide
+# ensuite. Un endpoint sans requete ne coute rien.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile.chatterbox
+      - handler_chatterbox.py
+      - voices/**
+      - .github/workflows/build-chatterbox.yml
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: chatterbox-serverless
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # pour publier le journal en cas d'echec
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Liberer de l'espace disque
+        run: |
+          echo "Avant :"; df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/.ghcup /opt/hostedtoolcache \
+                      /usr/local/share/boost /usr/share/swift \
+                      /usr/local/lib/node_modules /opt/az /usr/local/julia* \
+                      /usr/share/miniconda "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get autoremove -y && sudo apt-get clean
+          sudo docker image prune -af || true
+          echo "Apres :"; df -h /
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Noms d'images
+        id: img
+        run: |
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          echo "out=${REGISTRY}/${owner}/${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "ts=$(date -u +%Y%m%d-%H%M)" >> "$GITHUB_OUTPUT"
+
+      # Construction appelee directement plutot que via l'action : c'est le
+      # seul moyen de capturer la sortie et de la republier si ca casse.
+      - name: Build & push
+        run: |
+          set -o pipefail
+          docker buildx build \
+            --file Dockerfile.chatterbox \
+            --tag ${{ steps.img.outputs.out }}:latest \
+            --tag ${{ steps.img.outputs.out }}:${{ steps.img.outputs.ts }} \
+            --provenance=false --push --progress plain . 2>&1 | tee /tmp/build.log
+
+      # L'API GitHub refuse les journaux d'Actions sans jeton. On publie donc
+      # la fin du journal dans une branche dediee, que le depot etant public
+      # une simple URL brute suffit a lire.
+      - name: Publier le journal en cas d'echec
+        if: failure()
+        run: |
+          mkdir -p /tmp/journal
+          tail -c 60000 /tmp/build.log > /tmp/journal/chatterbox.log || \
+            echo "aucune sortie capturee" > /tmp/journal/chatterbox.log
+          cd /tmp/journal
+          git init -q
+          git checkout -q -b build-logs-chatterbox
+          git config user.email "actions@users.noreply.github.com"
+          git config user.name "GitHub Actions"
+          git add chatterbox.log
+          git commit -q -m "journal du build ${{ github.sha }}"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            build-logs-chatterbox
+          echo "journal publie sur la branche build-logs-chatterbox"
+
+      - name: Recapitulatif
+        run: |
+          {
+            echo "## Image Chatterbox publiee"
+            echo '```'
+            echo "${{ steps.img.outputs.out }}:${{ steps.img.outputs.ts }}"
+            echo "${{ steps.img.outputs.out }}:latest"
+            echo '```'
+            echo "### Endpoint a creer"
+            echo "- Nom : \`chatterbox-voix\`"
+            echo "- GPU : **24 Go suffisent**, mais evite les lignes marquees"
+            echo "  \`PRO\` **et** la categorie generique 24 GB : elle contient"
+            echo "  des tranches MIG de Blackwell, que torch 2.6 ne sait pas"
+            echo "  piloter. Prends **48 GB** sans pastille."
+            echo "- Execution Timeout : 600 s suffisent, la synthese est rapide."
+            echo ""
+            echo "### Licence"
+            echo "MIT — usage commercial autorise, contrairement aux poids XTTS-v2"
+            echo "sous Coqui Public Model License."
+            echo ""
+            echo "### A savoir"
+            echo "Chatterbox incorpore un filigrane inaudible dans tout ce qu'il"
+            echo "produit. Choix delibere de Resemble, qui ne se desactive pas."
+          } >> "$GITHUB_STEP_SUMMARY"

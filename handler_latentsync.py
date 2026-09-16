@@ -1,11 +1,17 @@
 """
 Handler RunPod Serverless pour LatentSync (ByteDance, Apache 2.0).
 
-Pourquoi ce second modèle à côté de MuseTalk : mesuré sur nos propres rendus,
-MuseTalk fait bouger la bouche à 80-105 % de son amplitude de parole pendant
-les silences, et n'articule pas les visèmes des consonnes. La cause est son
-entraînement, qui ne comporte quasiment pas de supervision de synchronisation
-labiale. LatentSync, lui, est entraîné sous contrainte d'un SyncNet.
+Pourquoi ce second modèle à côté de MuseTalk : MuseTalk n'articule pas les
+visèmes des consonnes, et son entraînement ne comporte quasiment pas de
+supervision de synchronisation labiale. LatentSync, lui, est entraîné sous
+contrainte d'un SyncNet.
+
+Une précision, parce qu'une version antérieure de ce fichier affirmait le
+contraire : la mesure qui donnait « la bouche bouge à 80-105 % pendant les
+silences » a été retirée. Appliquée à une vraie vidéo, avec une vraie voix
+et de vraies pauses, elle donnait 93 % — elle mesurait du mouvement, pas de
+la bouche. Ce qui reste établi tient en une phrase : trois audios différents
+donnent trois bouches différentes, donc le conditionnement audio fonctionne.
 
 Requête :
 {
