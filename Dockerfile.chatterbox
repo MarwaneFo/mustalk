@@ -21,35 +21,36 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python \
  && ln -sf /usr/bin/python3.10 /usr/local/bin/python3
 
-# L'ordre compte : runpod tire numpy 2.x, alors que chatterbox exige la
-# serie 1. On installe donc les outils en premier et chatterbox en
-# dernier, pour que sa contrainte soit celle qui s'applique. Dans
-# l'autre sens numpy remonte en 2.2 et les extensions compilees contre
-# la serie 1 cessent de se charger.
-# Installation depuis le depot : la version publiee sur PyPI n'expose pas
-# toujours le dernier modele multilingue, et c'est justement le v3 qu'on veut.
-# gradio est retire : c'est l'interface de demonstration, inutile dans un
-# worker, et elle tire a elle seule une centaine de megaoctets.
-RUN pip install --no-cache-dir runpod requests soundfile \
- && git clone --depth 1 https://github.com/resemble-ai/chatterbox.git /opt/chatterbox \
+# Installation depuis le depot, pas depuis PyPI : la version publiee n'expose
+# pas toujours le dernier modele multilingue, et c'est le v3 qu'on veut.
+#
+# On n'edite PAS pyproject.toml. Une version precedente y retirait gradio par
+# sed ; cela cassait les metadonnees, pip construisait un paquet anonyme
+# "UNKNOWN-0.0.0" sans aucune dependance, et chatterbox n'etait en fait jamais
+# installe. L'import ci-dessous echouerait desormais si cela se reproduisait.
+RUN git clone --depth 1 https://github.com/resemble-ai/chatterbox.git /opt/chatterbox \
  && cd /opt/chatterbox \
- && sed -i '/^ *"gradio/d' pyproject.toml \
  && pip install --no-cache-dir . \
+ && python -c "import chatterbox; print('chatterbox installe')" \
  && rm -rf /opt/chatterbox/.git
 
-# numpy reste en 1.x : chatterbox le declare ainsi, et des dependances
-# compilees contre la serie 1 cessent de se charger si une installation
-# ulterieure le remonte en 2 -- le piege qui nous a deja coute deux builds.
-RUN python -c "\
-import numpy; \
+# Les outils du worker ensuite. runpod tire numpy 2.x alors que chatterbox
+# exige la serie 1 : on remet donc numpy en place a la fin, en --no-deps pour
+# ne pas relancer la cascade. gradio part au passage : c'est l'interface de
+# demonstration, inutile dans un worker et lourde d'une centaine de Mo.
+RUN pip install --no-cache-dir runpod requests soundfile \
+ && pip uninstall -y gradio gradio-client || true \
+ && pip install --no-cache-dir --force-reinstall --no-deps "numpy==1.26.4" \
+ && python -c "\
+import numpy, chatterbox; \
 assert numpy.__version__.startswith('1.'), 'numpy remonte en ' + numpy.__version__; \
-print('numpy', numpy.__version__)"
+print('numpy', numpy.__version__, '| chatterbox present')"
 
 # --- Poids ---------------------------------------------------------------
 # Tout est embarque : un worker Serverless ne doit rien telecharger au
 # demarrage. La liste reprend exactement celle de from_pretrained pour le
-# modele v3 -- un fichier de plus serait du poids mort, un de moins un
-# echec au premier job.
+# modele v3 -- un fichier de plus serait du poids mort, un de moins un echec
+# au premier job.
 RUN python -c "\
 from huggingface_hub import snapshot_download; \
 snapshot_download(repo_id='ResembleAI/chatterbox', \
@@ -69,13 +70,13 @@ WORKDIR /opt
 # Verification a la construction : mieux vaut echouer ici, ou le journal est
 # lisible, qu'au premier job sur un worker distant.
 RUN python -c "\
-import torch, soundfile, numpy; \
+import torch, soundfile, numpy, os; \
 from chatterbox.mtl_tts import ChatterboxMultilingualTTS, SUPPORTED_LANGUAGES, MULTILINGUAL_T3_MODELS; \
-import os; \
 assert 'v3' in MULTILINGUAL_T3_MODELS, 'modele v3 absent de cette version'; \
 assert 'fr' in SUPPORTED_LANGUAGES and 'ar' in SUPPORTED_LANGUAGES; \
 voix = sorted(f for f in os.listdir('/opt/voices') if f.endswith('.wav')); \
 assert voix, 'aucune voix embarquee'; \
-print('torch', torch.__version__, '|', len(SUPPORTED_LANGUAGES), 'langues |', voix)"
+print('torch', torch.__version__, '| numpy', numpy.__version__, '|', \
+      len(SUPPORTED_LANGUAGES), 'langues |', voix)"
 
 CMD ["python", "-u", "handler.py"]
